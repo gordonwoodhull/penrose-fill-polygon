@@ -65,43 +65,22 @@ class Vector {
 }
 
 class Triangle {
-    constructor(v1, v2, v3, fillColor) {
+    constructor(v1, v2, v3, coord, fillColor) {
         this.v1 = v1;
         this.v2 = v2;
         this.v3 = v3;
 
         this.fillColor = fillColor;
+	this.coord = coord;
+	if(!coord)
+	    debugger;
     }
-
-    // draw(ctx) {
-    //     // Store fill style in a temp variable, to set it back later
-    //     var tempFillStyle = ctx.fillStyle;
-
-    //     ctx.fillStyle = this.fillColor;
-    //     ctx.beginPath();
-    //     ctx.moveTo(this.v1.x, this.v1.y);
-    //     ctx.lineTo(this.v2.x, this.v2.y);
-    //     ctx.lineTo(this.v3.x, this.v3.y);
-    //     ctx.lineTo(this.v1.x, this.v1.y);
-    //     ctx.fill();
-
-    //     ctx.strokeStyle = "black";
-    //     ctx.lineWidth = 3;
-    //     ctx.beginPath();
-    //     ctx.moveTo(this.v1.x, this.v1.y);
-    //     ctx.lineTo(this.v2.x, this.v2.y);
-    //     ctx.stroke();
-    //     ctx.moveTo(this.v1.x, this.v1.y);
-    //     ctx.lineTo(this.v3.x, this.v3.y);
-    //     ctx.stroke();
-
-    //     ctx.fillStyle = tempFillStyle;
-    // }
 }
 
+// X
 class ThinLeftTriangle extends Triangle {
-    constructor(v1, v2, v3) {
-        super(v1, v2, v3, 'blue');
+    constructor(v1, v2, v3, coord) {
+        super(v1, v2, v3, coord, 'blue');
     }
 
     split() {
@@ -109,16 +88,17 @@ class ThinLeftTriangle extends Triangle {
         var split_point_13 = this.v1.add(vector_13);
 
         var new_triangles = []
-        new_triangles.push(new ThinLeftTriangle(this.v2, this.v3, split_point_13));
-        new_triangles.push(new ThickLeftTriangle(split_point_13, this.v1, this.v2));
+        new_triangles.push(new ThinLeftTriangle(this.v2, this.v3, split_point_13, 'D' + this.coord));
+        new_triangles.push(new ThickLeftTriangle(split_point_13, this.v1, this.v2, 'X' + this.coord));
 
         return new_triangles;
     }
 }
 
+// Y
 class ThinRightTriangle extends Triangle {
-    constructor(v1, v2, v3) {
-        super(v1, v2, v3, 'blue');
+    constructor(v1, v2, v3, coord) {
+        super(v1, v2, v3, coord, 'blue');
     }
 
     split() {
@@ -126,16 +106,17 @@ class ThinRightTriangle extends Triangle {
         var split_point_12 = this.v1.add(vector_12);
 
         var new_triangles = []
-        new_triangles.push(new ThinRightTriangle(this.v3, split_point_12, this.v2));
-        new_triangles.push(new ThickRightTriangle(split_point_12, this.v3, this.v1));
+        new_triangles.push(new ThinRightTriangle(this.v3, split_point_12, this.v2, 'Y' + this.coord));
+        new_triangles.push(new ThickRightTriangle(split_point_12, this.v3, this.v1, 'C' + this.coord));
 
         return new_triangles;
     }
 }
 
+// C
 class ThickLeftTriangle extends Triangle {
-    constructor(v1, v2, v3) {
-        super(v1, v2, v3, 'red');
+    constructor(v1, v2, v3, coord) {
+        super(v1, v2, v3, coord, 'red');
     }
 
     split() {
@@ -146,17 +127,18 @@ class ThickLeftTriangle extends Triangle {
         var split_point_31 = this.v3.add(vector_31);
 
         var new_triangles = [];
-        new_triangles.push(new ThickRightTriangle(split_point_31, split_point_32, this.v3));
-        new_triangles.push(new ThinRightTriangle(split_point_32, split_point_31, this.v1));
-        new_triangles.push(new ThickLeftTriangle(split_point_32, this.v1, this.v2));
+        new_triangles.push(new ThickRightTriangle(split_point_31, split_point_32, this.v3, 'X' + this.coord));
+        new_triangles.push(new ThinRightTriangle(split_point_32, split_point_31, this.v1, 'D' + this.coord));
+        new_triangles.push(new ThickLeftTriangle(split_point_32, this.v1, this.v2, 'C' + this.coord));
 
         return new_triangles;
     }
 }
 
+// D
 class ThickRightTriangle extends Triangle {
-    constructor(v1, v2, v3) {
-        super(v1, v2, v3, 'red');
+    constructor(v1, v2, v3, coord) {
+        super(v1, v2, v3, coord, 'red');
     }
 
     split() {
@@ -167,9 +149,9 @@ class ThickRightTriangle extends Triangle {
         var split_point_23 = this.v2.add(vector_23);
 
         var new_triangles = [];
-        new_triangles.push(new ThickRightTriangle(split_point_23, this.v3, this.v1));
-        new_triangles.push(new ThinLeftTriangle(split_point_23, this.v1, split_point_21));
-        new_triangles.push(new ThickLeftTriangle(split_point_21, this.v2, split_point_23));
+        new_triangles.push(new ThickRightTriangle(split_point_23, this.v3, this.v1, 'Y' + this.coord));
+        new_triangles.push(new ThinLeftTriangle(split_point_23, this.v1, split_point_21, 'C' + this.coord));
+        new_triangles.push(new ThickLeftTriangle(split_point_21, this.v2, split_point_23, 'D' + this.coord));
 
         return new_triangles;
     }
@@ -185,8 +167,8 @@ function drawPenroseTiling() {
     if (init_shape === 'rhombus') {
         var side = Math.min(width, height);
         var ratio = Math.sin(36 * (Math.PI / 180)) / Math.sin(54 * (Math.PI / 180));
-        var t1 = new ThickRightTriangle(new Vector(side / 2.0, 0), new Vector(side, side / 2.0 * ratio), new Vector(0, side / 2.0 * ratio));
-        var t2 = new ThickLeftTriangle(new Vector(side / 2.0, side * ratio), new Vector(0, side / 2.0 * ratio), new Vector(side, side / 2.0 * ratio));
+        var t1 = new ThickRightTriangle(new Vector(side / 2.0, 0), new Vector(side, side / 2.0 * ratio), new Vector(0, side / 2.0 * ratio), 'D');
+        var t2 = new ThickLeftTriangle(new Vector(side / 2.0, side * ratio), new Vector(0, side / 2.0 * ratio), new Vector(side, side / 2.0 * ratio), 'C');
         triangles.push(t1);
         triangles.push(t2);
     }
@@ -199,14 +181,16 @@ function drawPenroseTiling() {
         for (var i = 0; i < 10; i++) {
             var v1 = center.add(new Vector(Math.cos(grad_increment * i), Math.sin(grad_increment * i)).multiply(r));
             var v2 = center.add(new Vector(Math.cos(grad_increment * (i+1)), Math.sin(grad_increment * (i+1))).multiply(r));
-            var trig_class;
+            var trig_class, coord;
             if (i % 2 == 0) {
                 trig_class = ThinRightTriangle;
+		coord = 'X';
             } else {
                 trig_class = ThinLeftTriangle;
+		coord = 'Y';
             }
 
-            var trig = new trig_class(center, v2, v1);
+            var trig = new trig_class(center, v2, v1, coord);
             triangles.push(trig);
         }
     }
@@ -228,12 +212,22 @@ function drawPenroseTiling() {
 	.join('path')
 	.attr('d', tri => `M ${tri.v1.x}, ${tri.v1.y} L ${tri.v2.x}, ${tri.v2.y} L ${tri.v3.x}, ${tri.v3.y} Z`)
 	.attr('fill', tri => tri.fillColor);
+    if(showIndex) {
+	d3.select('svg#main')
+	    .selectAll('text').data(triangles)
+	    .join('text')
+	    .attr('x', tri => (tri.v1.x + tri.v2.x + tri.v3.x) / 3)
+	    .attr('y', tri => (tri.v1.y + tri.v2.y + tri.v3.y) / 3)
+	    .text(tri => tri.coord);
+    }
+	
 }
 
 
 const urlParams = new URLSearchParams(window.location.search);
 const depth = urlParams.get('depth');
 const shape = urlParams.get('shape');
+const showIndex = urlParams.get('coord') !== null;
 
 if(depth !== null) {
     d3.select('#level').property('value', depth);
