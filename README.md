@@ -6,7 +6,7 @@ Simon Tatham describes a simple algorithm for finding a random tiling of P3 rhom
 
 We put the polygon in a random place and scale within a [golden gnomon](https://en.wikipedia.org/wiki/Golden_triangle_(mathematics)#Golden_gnomon), then recursively use [Robinson triangle decompositions](https://en.wikipedia.org/wiki/Penrose_tiling#Robinson_triangle_decompositions) to split any triangles which intersect with the polygon, until we have generated enough tiles.
 
-Thanks to Andrei Paleyes for the original [penrose-tiling](https://github.com/apaleyes/penrose-tiling).
+Thanks to Andrei Paleyes for the original [penrose-tiling](https://github.com/apaleyes/penrose-tiling), which provides the Robinson triangle-splitting algorithm.
 
 Thanks to Daria Vasyukova [@gereleth](https://twitter.com/gereleth/) for encouraging and helping implement a P3 tiling for [hexapipes](https://hexapipes.vercel.app/). (Watch for it!)
 
