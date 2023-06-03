@@ -1,5 +1,49 @@
 var GOLDEN_RATIO = 0.6180339887498948482;
 
+
+// from Eyal's answer, based on Hassan's, on Stack Overflow
+// Detection of Triangle Collision in 2D Space
+// https://stackoverflow.com/a/44269990
+
+
+// check that all points of the other triangle are on the same side of the triangle after mapping to barycentric coordinates.
+// returns true if all points are outside on the same side
+var cross2 = function(A, B) {
+    var a1 = A.v1;
+    var a2 = A.v2;
+    var a3 = A.v3;
+    var b1 = B.v1;
+    var b2 = B.v2;
+    var b3 = B.v3;
+    // renamed variable names above, inconsistent with below
+    var dXa = a1.x - b3.x;
+    var dYa = a1.y - b3.y;
+    var dXb = a2.x - b3.x;
+    var dYb = a2.y - b3.y;
+    var dXc = a3.x - b3.x;
+    var dYc = a3.y - b3.y;
+    var dX21 = b3.x - b2.x;
+    var dY12 = b2.y - b3.y;
+    var D = dY12 * (b1.x - b3.x) + dX21 * (b1.y - b3.y);
+    var sa = dY12 * dXa + dX21 * dYa;
+    var sb = dY12 * dXb + dX21 * dYb;
+    var sc = dY12 * dXc + dX21 * dYc;
+    var ta = (b3.y - b1.y) * dXa + (b1.x - b3.x) * dYa;
+    var tb = (b3.y - b1.y) * dXb + (b1.x - b3.x) * dYb;
+    var tc = (b3.y - b1.y) * dXc + (b1.x - b3.x) * dYc;
+    if (D < 0) return ((sa >= 0 && sb >= 0 && sc >= 0) ||
+                       (ta >= 0 && tb >= 0 && tc >= 0) ||
+                       (sa+ta <= D && sb+tb <= D && sc+tc <= D));
+    return ((sa <= 0 && sb <= 0 && sc <= 0) ||
+            (ta <= 0 && tb <= 0 && tc <= 0) ||
+            (sa+ta >= D && sb+tb >= D && sc+tc >= D));
+}
+
+var trianglesIntersect = function(A, B) {
+    return !(cross2(A, B) ||
+             cross2(B, A));
+}
+
 // Used to represent both points and vectors for simplicity
 class Vector {
     constructor(x, y) {
