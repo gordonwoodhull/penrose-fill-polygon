@@ -73,30 +73,30 @@ class Triangle {
         this.fillColor = fillColor;
     }
 
-    draw(ctx) {
-        // Store fill style in a temp variable, to set it back later
-        var tempFillStyle = ctx.fillStyle;
+    // draw(ctx) {
+    //     // Store fill style in a temp variable, to set it back later
+    //     var tempFillStyle = ctx.fillStyle;
 
-        ctx.fillStyle = this.fillColor;
-        ctx.beginPath();
-        ctx.moveTo(this.v1.x, this.v1.y);
-        ctx.lineTo(this.v2.x, this.v2.y);
-        ctx.lineTo(this.v3.x, this.v3.y);
-        ctx.lineTo(this.v1.x, this.v1.y);
-        ctx.fill();
+    //     ctx.fillStyle = this.fillColor;
+    //     ctx.beginPath();
+    //     ctx.moveTo(this.v1.x, this.v1.y);
+    //     ctx.lineTo(this.v2.x, this.v2.y);
+    //     ctx.lineTo(this.v3.x, this.v3.y);
+    //     ctx.lineTo(this.v1.x, this.v1.y);
+    //     ctx.fill();
 
-        ctx.strokeStyle = "black";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(this.v1.x, this.v1.y);
-        ctx.lineTo(this.v2.x, this.v2.y);
-        ctx.stroke();
-        ctx.moveTo(this.v1.x, this.v1.y);
-        ctx.lineTo(this.v3.x, this.v3.y);
-        ctx.stroke();
+    //     ctx.strokeStyle = "black";
+    //     ctx.lineWidth = 3;
+    //     ctx.beginPath();
+    //     ctx.moveTo(this.v1.x, this.v1.y);
+    //     ctx.lineTo(this.v2.x, this.v2.y);
+    //     ctx.stroke();
+    //     ctx.moveTo(this.v1.x, this.v1.y);
+    //     ctx.lineTo(this.v3.x, this.v3.y);
+    //     ctx.stroke();
 
-        ctx.fillStyle = tempFillStyle;
-    }
+    //     ctx.fillStyle = tempFillStyle;
+    // }
 }
 
 class ThinLeftTriangle extends Triangle {
@@ -178,14 +178,12 @@ class ThickRightTriangle extends Triangle {
 function drawPenroseTiling() {
     var rounds = document.getElementById("level").value;
     var init_shape = document.querySelector('input[name="init_shape"]:checked').value;
-
-    var canvas = document.getElementById("main");
-    var ctx = canvas.getContext('2d');
-
+    const width = +d3.select('svg#main').attr('width').replace('px', ''),
+	  height =  +d3.select('svg#main').attr('height').replace('px', '');
     var triangles = [];
 
     if (init_shape === 'rhombus') {
-        var side = Math.min(canvas.width, canvas.height);
+        var side = Math.min(width, height);
         var ratio = Math.sin(36 * (Math.PI / 180)) / Math.sin(54 * (Math.PI / 180));
         var t1 = new ThickRightTriangle(new Vector(side / 2.0, 0), new Vector(side, side / 2.0 * ratio), new Vector(0, side / 2.0 * ratio));
         var t2 = new ThickLeftTriangle(new Vector(side / 2.0, side * ratio), new Vector(0, side / 2.0 * ratio), new Vector(side, side / 2.0 * ratio));
@@ -194,7 +192,7 @@ function drawPenroseTiling() {
     }
 
     if (init_shape === 'circle') {
-        var side = Math.min(canvas.width, canvas.height);
+        var side = Math.min(width, height);
         var r = side / 2.0;
         var grad_increment = 36 * (Math.PI / 180);
         var center = new Vector(side / 2.0, side / 2.0);
@@ -213,12 +211,9 @@ function drawPenroseTiling() {
         }
     }
 
-    triangles.forEach(function(t){
-        t.draw(ctx);
-    })
-
     for (var round = 0; round < rounds; round++) {
         var new_triangles = [];
+	
 
         for (var i = 0; i < triangles.length; i++) {
             var trig = triangles[i];
@@ -226,9 +221,11 @@ function drawPenroseTiling() {
         }
 
         triangles = new_triangles;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        triangles.forEach(function(t){
-            t.draw(ctx);
-        })
     }
+    console.log(triangles);
+    d3.select('svg#main')
+	.selectAll('path').data(triangles)
+	.join('path')
+	.attr('d', tri => `M ${tri.v1.x}, ${tri.v1.y} L ${tri.v2.x}, ${tri.v2.y} L ${tri.v3.x}, ${tri.v3.y} Z`)
+	.attr('fill', tri => tri.fillColor);
 }
