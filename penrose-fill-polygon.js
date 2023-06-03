@@ -229,3 +229,18 @@ function drawPenroseTiling() {
 	.attr('d', tri => `M ${tri.v1.x}, ${tri.v1.y} L ${tri.v2.x}, ${tri.v2.y} L ${tri.v3.x}, ${tri.v3.y} Z`)
 	.attr('fill', tri => tri.fillColor);
 }
+
+
+const urlParams = new URLSearchParams(window.location.search);
+const depth = urlParams.get('depth');
+const shape = urlParams.get('shape');
+
+if(depth !== null) {
+    d3.select('#level').property('value', depth);
+    d3.select('#levelOutput').text(depth);
+}
+
+allowedShapes = d3.selectAll('input[name="init_shape"]').nodes().map(elem => elem.value);
+if(shape !== null && allowedShapes.includes(shape))
+    d3.selectAll('input[name="init_shape"]').property('checked', function() { return this.value === shape; });
+
