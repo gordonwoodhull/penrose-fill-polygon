@@ -55,6 +55,11 @@ class Vector {
         return new Vector(end.x - start.x, end.y - start.y);
     }
 
+    print() {
+	const prec = 4;
+	return `${this.x.toFixed(prec)}, ${this.y.toFixed(prec)}`;
+    }
+
     multiply(multiplier) {
         return new Vector(this.x * multiplier, this.y * multiplier);
     }
@@ -157,43 +162,37 @@ class ThickRightTriangle extends Triangle {
     }
 }
 
+function regularPolygon(center, r, sides) {
+    const thetas = d3.range(0.5, sides, 1).map(v => v * 2 * Math.PI / sides);
+    return thetas.map(theta => new Vector(Math.cos(theta)*r + center.x, Math.sin(theta)*r + center.y));
+}
+
+function triangulate(polygon) {
+    return d3.range(2, polygon.length).map(i => new Triangle(polygon[0], polygon[i-1], polygon[i], "N/A", "green"));
+}
+
+const fixed = x => x.toFixed(3);
+
+const poly_names = {square: 4, pentagon: 5, hexagon: 6};
+
 function drawPenroseTiling() {
     var rounds = document.getElementById("level").value;
     var init_shape = document.querySelector('input[name="init_shape"]:checked').value;
     const width = +d3.select('svg#main').attr('width').replace('px', ''),
 	  height =  +d3.select('svg#main').attr('height').replace('px', '');
-    var triangles = [];
-
-    if (init_shape === 'rhombus') {
-        var side = Math.min(width, height);
-        var ratio = Math.sin(36 * (Math.PI / 180)) / Math.sin(54 * (Math.PI / 180));
-        var t1 = new ThickRightTriangle(new Vector(side / 2.0, 0), new Vector(side, side / 2.0 * ratio), new Vector(0, side / 2.0 * ratio), 'D');
-        var t2 = new ThickLeftTriangle(new Vector(side / 2.0, side * ratio), new Vector(0, side / 2.0 * ratio), new Vector(side, side / 2.0 * ratio), 'C');
-        triangles.push(t1);
-        triangles.push(t2);
-    }
-
-    if (init_shape === 'circle') {
-        var side = Math.min(width, height);
-        var r = side / 2.0;
-        var grad_increment = 36 * (Math.PI / 180);
-        var center = new Vector(side / 2.0, side / 2.0);
-        for (var i = 0; i < 10; i++) {
-            var v1 = center.add(new Vector(Math.cos(grad_increment * i), Math.sin(grad_increment * i)).multiply(r));
-            var v2 = center.add(new Vector(Math.cos(grad_increment * (i+1)), Math.sin(grad_increment * (i+1))).multiply(r));
-            var trig_class, coord;
-            if (i % 2 == 0) {
-                trig_class = ThinRightTriangle;
-		coord = 'X';
-            } else {
-                trig_class = ThinLeftTriangle;
-		coord = 'Y';
-            }
-
-            var trig = new trig_class(center, v2, v1, coord);
-            triangles.push(trig);
-        }
-    }
+    var ratio = Math.sin(36 * (Math.PI / 180)) / Math.sin(54 * (Math.PI / 180));
+    var gnomon = new ThickRightTriangle(new Vector(width / 2.0, 0), new Vector(width, width / 2.0 * ratio), new Vector(0, width / 2.0 * ratio), 'D');
+    var triangles = [gnomon];
+    let center,
+	r = d3.randomUniform(width/100, width/8)(),
+	xrand = d3.randomUniform(r, width-r),
+	yrand = d3.randomUniform(r, width / 2.0 * ratio - r),
+	polygon, polyTris;
+    do {
+	center = new Vector(xrand(), yrand());
+	polygon = regularPolygon(center, r, poly_names[init_shape]);
+	polyTris = triangulate(polygon);
+    } while(!polyTris.some(tri => trianglesIntersect(tri, gnomon)));
 
     for (var round = 0; round < rounds; round++) {
         var new_triangles = [];
@@ -206,20 +205,26 @@ function drawPenroseTiling() {
 
         triangles = new_triangles;
     }
-    console.log(triangles);
     d3.select('svg#main')
-	.selectAll('path').data(triangles)
+	.selectAll('path.robinson').data(triangles)
 	.join('path')
+	.attr('class', 'robinson')
 	.attr('d', tri => `M ${tri.v1.x}, ${tri.v1.y} L ${tri.v2.x}, ${tri.v2.y} L ${tri.v3.x}, ${tri.v3.y} Z`)
 	.attr('fill', tri => tri.fillColor);
     if(showIndex) {
 	d3.select('svg#main')
-	    .selectAll('text').data(triangles)
+	    .selectAll('text.robinson').data(triangles)
 	    .join('text')
+	    .attr('class', 'text')
 	    .attr('x', tri => (tri.v1.x + tri.v2.x + tri.v3.x) / 3)
 	    .attr('y', tri => (tri.v1.y + tri.v2.y + tri.v3.y) / 3)
 	    .text(tri => tri.coord);
     }
+    d3.select('svg#main')
+	.selectAll('path.polygon').data([0])
+	.join('path')
+	.attr('class', 'polygon')
+	.attr('d', _ => `M ${polygon[0].print()} ` + polygon.slice(1).map(v => v.print()).join(' ') + ' Z');
 	
 }
 

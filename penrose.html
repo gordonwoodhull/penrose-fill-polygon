@@ -24,9 +24,14 @@
                 height: 100%;
                 float: left;
 	    }
-	    svg path {
+	    svg path.robinson {
 		stroke-width: 1px;
 		stroke: black;
+	    }
+	    svg path.polygon {
+		stroke-width: 2px;
+		stroke: turquoise;
+		fill: none
 	    }
 	    svg text {
 		font-family: sans-serif;
@@ -43,10 +48,12 @@
                 <fieldset>
                     <p>Initial shape</p>
                     <div>
-                        <input type="radio" name="init_shape" value="rhombus" checked="checked">
-                        <label>Rhombus</label>
-                        <input type="radio" name="init_shape" value="circle">
-                        <label>Circle</label>
+                        <input type="radio" name="init_shape" value="square" checked="checked">
+                        <label>Square</label>
+                        <input type="radio" name="init_shape" value="pentagon">
+                        <label>Pentagon</label>
+                        <input type="radio" name="init_shape" value="hexagon">
+                        <label>Hexagon</label>
                     </div>
                 </fieldset>
                 <fieldset>
