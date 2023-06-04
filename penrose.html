@@ -24,14 +24,9 @@
 		float: left;
 		position: absolute;
 	    }
-	    svg#main {
+	    svg {
 		width: 100%;
-		height: 100%;
-		/* position: fixed; */
-		/* left: 0; */
-		/* top: 0; */
-		/* right: 0; */
-		/* bottom: 0; */
+		height: 50%;
 	    }
 
 	    svg path.robinson {
@@ -72,10 +67,14 @@
                 </fieldset>
                 <input type="button" onclick="drawPenroseTiling();" value="Draw" />
             </div>
-            <svg id="main">
+            <svg id="gnomon">
 	      <g id="triangles"></g>
 	      <g id="polygon"></g>
             </svg>
+	    <svg id="tiles">
+	      <g id="triangles"></g>
+	      <g id="polygon"></g>
+	    </svg>
 	<script type="text/javascript" src="penrose-fill-polygon.js">
 	</script>
     </body>

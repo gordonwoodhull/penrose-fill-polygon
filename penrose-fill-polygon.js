@@ -186,12 +186,34 @@ function triangulate(polygon) {
 
 const fixed = x => x.toFixed(3);
 
+function draw(selector, triangles, discarded, polygon) {
+    d3.select(`${selector} g#triangles`)
+	.selectAll('path.robinson').data(triangles.concat(discarded))
+	.join('path')
+	.attr('class', 'robinson')
+	.attr('d', tri => `M ${tri.v1.x}, ${tri.v1.y} L ${tri.v2.x}, ${tri.v2.y} L ${tri.v3.x}, ${tri.v3.y} Z`)
+	.attr('fill', tri => tri.fillColor);
+    if(showIndex) {
+	d3.select(`${selector} g#triangles`)
+	    .selectAll('text.robinson').data(triangles)
+	    .join('text')
+	    .attr('class', 'robinson')
+	    .attr('x', tri => (tri.v1.x + tri.v2.x + tri.v3.x) / 3)
+	    .attr('y', tri => (tri.v1.y + tri.v2.y + tri.v3.y) / 3)
+	    .text(tri => tri.coord);
+    }
+    d3.select(`${selector} g#polygon`)
+	.selectAll('path.polygon').data([0])
+	.join('path')
+	.attr('class', 'polygon')
+	.attr('d', _ => `M ${polygon[0].print()} ` + polygon.slice(1).map(v => v.print()).join(' ') + ' Z');
+}
 
 function drawPenroseTiling() {
     var minimum = document.getElementById("minimum").value;
     var init_shape = document.querySelector('input[name="init_shape"]:checked').value;
-    const width = +d3.select('svg#main').nodes()[0].clientWidth,
-	  height =  +d3.select('svg#main').nodes()[0].clientHeight;
+    const width = +d3.select('svg#gnomon').nodes()[0].clientWidth,
+	  height =  +d3.select('svg#gnomon').nodes()[0].clientHeight;
     var ratio = Math.sin(36 * (Math.PI / 180)) / Math.sin(54 * (Math.PI / 180));
     var gnomon = new ThickRightTriangle(new Vector(width / 2.0, 0), new Vector(width, width / 2.0 * ratio), new Vector(0, width / 2.0 * ratio), 'D');
     var triangles = [gnomon];
@@ -223,27 +245,15 @@ function drawPenroseTiling() {
     }
     while (triangles.length / 2 < minimum);
     discarded.forEach(tri => tri.fillColor = 'none');
-    d3.select('svg#main g#triangles')
-	.selectAll('path.robinson').data(triangles.concat(discarded))
-	.join('path')
-	.attr('class', 'robinson')
-	.attr('d', tri => `M ${tri.v1.x}, ${tri.v1.y} L ${tri.v2.x}, ${tri.v2.y} L ${tri.v3.x}, ${tri.v3.y} Z`)
-	.attr('fill', tri => tri.fillColor);
-    if(showIndex) {
-	d3.select('svg#main g#triangles')
-	    .selectAll('text.robinson').data(triangles)
-	    .join('text')
-	    .attr('class', 'robinson')
-	    .attr('x', tri => (tri.v1.x + tri.v2.x + tri.v3.x) / 3)
-	    .attr('y', tri => (tri.v1.y + tri.v2.y + tri.v3.y) / 3)
-	    .text(tri => tri.coord);
-    }
-    d3.select('svg#main g#polygon')
-	.selectAll('path.polygon').data([0])
-	.join('path')
-	.attr('class', 'polygon')
-	.attr('d', _ => `M ${polygon[0].print()} ` + polygon.slice(1).map(v => v.print()).join(' ') + ' Z');
-	
+    draw('svg#gnomon', triangles, discarded, polygon);
+    const tl = new Vector(
+	d3.min(triangles, tri => d3.min([tri.v1.x, tri.v2.x, tri.v3.x])),
+	d3.min(triangles, tri => d3.min([tri.v1.y, tri.v2.y, tri.v3.y])));
+    const br = new Vector(
+	d3.max(triangles, tri => d3.max([tri.v1.x, tri.v2.x, tri.v3.x])),
+	d3.max(triangles, tri => d3.max([tri.v1.y, tri.v2.y, tri.v3.y])));
+    d3.select('svg#tiles').attr('viewBox', [tl.x, tl.y, br.x - tl.x, br.y - tl.y].join(' '));
+    draw('svg#tiles', triangles, [], polygon);
 }
 
 
