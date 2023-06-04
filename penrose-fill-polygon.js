@@ -77,8 +77,6 @@ class Triangle {
 
         this.fillColor = fillColor;
 	this.coord = coord;
-	if(!coord)
-	    debugger;
     }
 }
 
@@ -190,10 +188,10 @@ const fixed = x => x.toFixed(3);
 
 
 function drawPenroseTiling() {
-    var rounds = document.getElementById("level").value;
+    var minimum = document.getElementById("minimum").value;
     var init_shape = document.querySelector('input[name="init_shape"]:checked').value;
-    const width = +d3.select('svg#main').attr('width').replace('px', ''),
-	  height =  +d3.select('svg#main').attr('height').replace('px', '');
+    const width = +d3.select('svg#main').nodes()[0].clientWidth,
+	  height =  +d3.select('svg#main').nodes()[0].clientHeight;
     var ratio = Math.sin(36 * (Math.PI / 180)) / Math.sin(54 * (Math.PI / 180));
     var gnomon = new ThickRightTriangle(new Vector(width / 2.0, 0), new Vector(width, width / 2.0 * ratio), new Vector(0, width / 2.0 * ratio), 'D');
     var triangles = [gnomon];
@@ -201,14 +199,18 @@ function drawPenroseTiling() {
 	r = d3.randomUniform(width/100, width/8)(),
 	xrand = d3.randomUniform(r, width-r),
 	yrand = d3.randomUniform(r, width / 2.0 * ratio - r),
-	polygon, polyTris;
+	polygon, tinytris;
     do {
 	center = new Vector(xrand(), yrand());
 	polygon = regularPolygon(center, r, init_shape);
-	polyTris = triangulate(polygon);
-    } while(!polyTris.some(tri => trianglesIntersect(tri, gnomon)));
+	// this is dumb; we want point in polygon but we have the hammer of triangle intersection
+	// it's not like we need to speed this up
+	tinytris = polygon.map(p => new Triangle(p, new Vector(p.x + 0.0001, p.y + 0.0001), new Vector(p.x - 0.0002, p.y)));
+    } while(!tinytris.every(tri => trianglesIntersect(tri, gnomon)));
+    const polyTris = triangulate(polygon);
 
-    for (var round = 0; round < rounds; round++) {
+    const discarded = [];
+    do {
         var new_triangles = [];
 	
 
@@ -216,25 +218,27 @@ function drawPenroseTiling() {
             var trig = triangles[i];
             new_triangles = new_triangles.concat(trig.split());
         }
-
-        triangles = new_triangles;
+	discarded.push.apply(discarded, new_triangles.filter(tri => !polyTris.some(ptri => trianglesIntersect(ptri, tri))));
+        triangles = new_triangles.filter(tri => polyTris.some(ptri => trianglesIntersect(ptri, tri)));
     }
-    d3.select('svg#main')
-	.selectAll('path.robinson').data(triangles)
+    while (triangles.length / 2 < minimum);
+    discarded.forEach(tri => tri.fillColor = 'none');
+    d3.select('svg#main g#triangles')
+	.selectAll('path.robinson').data(triangles.concat(discarded))
 	.join('path')
 	.attr('class', 'robinson')
 	.attr('d', tri => `M ${tri.v1.x}, ${tri.v1.y} L ${tri.v2.x}, ${tri.v2.y} L ${tri.v3.x}, ${tri.v3.y} Z`)
 	.attr('fill', tri => tri.fillColor);
     if(showIndex) {
-	d3.select('svg#main')
+	d3.select('svg#main g#triangles')
 	    .selectAll('text.robinson').data(triangles)
 	    .join('text')
-	    .attr('class', 'text')
+	    .attr('class', 'robinson')
 	    .attr('x', tri => (tri.v1.x + tri.v2.x + tri.v3.x) / 3)
 	    .attr('y', tri => (tri.v1.y + tri.v2.y + tri.v3.y) / 3)
 	    .text(tri => tri.coord);
     }
-    d3.select('svg#main')
+    d3.select('svg#main g#polygon')
 	.selectAll('path.polygon').data([0])
 	.join('path')
 	.attr('class', 'polygon')
@@ -249,8 +253,8 @@ const shape = urlParams.get('shape');
 const showIndex = urlParams.get('coord') !== null;
 
 if(depth !== null) {
-    d3.select('#level').property('value', depth);
-    d3.select('#levelOutput').text(depth);
+    d3.select('#minimum').property('value', depth);
+    d3.select('#minimumOutput').text(depth);
 }
 
 allowedShapes = d3.selectAll('input[name="init_shape"]').nodes().map(elem => elem.value);
