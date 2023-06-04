@@ -162,8 +162,23 @@ class ThickRightTriangle extends Triangle {
     }
 }
 
-function regularPolygon(center, r, sides) {
-    const thetas = d3.range(0.5, sides, 1).map(v => v * 2 * Math.PI / sides);
+const shape_spec = {
+    square: {
+	sides: 4,
+	offset: 0.5
+    },
+    pentagon: {
+	sides: 5,
+	offset: -0.25
+    },
+    hexagon: {
+	sides: 6
+    }
+};
+
+function regularPolygon(center, r, shape) {
+    const {sides, offset} = shape_spec[shape];
+    const thetas = d3.range(offset || 0, sides, 1).map(v => v * 2 * Math.PI / sides);
     return thetas.map(theta => new Vector(Math.cos(theta)*r + center.x, Math.sin(theta)*r + center.y));
 }
 
@@ -173,7 +188,6 @@ function triangulate(polygon) {
 
 const fixed = x => x.toFixed(3);
 
-const poly_names = {square: 4, pentagon: 5, hexagon: 6};
 
 function drawPenroseTiling() {
     var rounds = document.getElementById("level").value;
@@ -190,7 +204,7 @@ function drawPenroseTiling() {
 	polygon, polyTris;
     do {
 	center = new Vector(xrand(), yrand());
-	polygon = regularPolygon(center, r, poly_names[init_shape]);
+	polygon = regularPolygon(center, r, init_shape);
 	polyTris = triangulate(polygon);
     } while(!polyTris.some(tri => trianglesIntersect(tri, gnomon)));
 
