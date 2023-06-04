@@ -55,9 +55,11 @@ class Vector {
         return new Vector(end.x - start.x, end.y - start.y);
     }
 
-    print() {
+    print(xform, yform) {
+	xform = xform || (x => x);
+	yform = yform || (y => y);
 	const prec = 4;
-	return `${this.x.toFixed(prec)}, ${this.y.toFixed(prec)}`;
+	return `${xform(this.x).toFixed(prec)}, ${yform(this.y).toFixed(prec)}`;
     }
 
     multiply(multiplier) {
@@ -186,27 +188,32 @@ function triangulate(polygon) {
 
 const fixed = x => x.toFixed(3);
 
-function draw(selector, triangles, discarded, polygon) {
+function draw(selector, triangles, discarded, polygon, tl = null, ofs = null, scale = null) {
+    tl = tl || new Vector(0, 0);
+    ofs = ofs || new Vector(0, 0);
+    scale = scale || new Vector(1, 1);
+    const xform = x => (x - tl.x) * scale.x + ofs.x;
+    const yform = y => (y - tl.y) * scale.y + ofs.y;
     d3.select(`${selector} g#triangles`)
 	.selectAll('path.robinson').data(triangles.concat(discarded))
 	.join('path')
 	.attr('class', 'robinson')
-	.attr('d', tri => `M ${tri.v1.x}, ${tri.v1.y} L ${tri.v2.x}, ${tri.v2.y} L ${tri.v3.x}, ${tri.v3.y} Z`)
+	.attr('d', tri => `M ${xform(tri.v1.x)}, ${yform(tri.v1.y)} L ${xform(tri.v2.x)}, ${yform(tri.v2.y)} L ${xform(tri.v3.x)}, ${yform(tri.v3.y)} Z`)
 	.attr('fill', tri => tri.fillColor);
     if(showIndex) {
 	d3.select(`${selector} g#triangles`)
 	    .selectAll('text.robinson').data(triangles)
 	    .join('text')
 	    .attr('class', 'robinson')
-	    .attr('x', tri => (tri.v1.x + tri.v2.x + tri.v3.x) / 3)
-	    .attr('y', tri => (tri.v1.y + tri.v2.y + tri.v3.y) / 3)
+	    .attr('x', tri => xform((tri.v1.x + tri.v2.x + tri.v3.x) / 3))
+	    .attr('y', tri => yform((tri.v1.y + tri.v2.y + tri.v3.y) / 3))
 	    .text(tri => tri.coord);
     }
     d3.select(`${selector} g#polygon`)
 	.selectAll('path.polygon').data([0])
 	.join('path')
 	.attr('class', 'polygon')
-	.attr('d', _ => `M ${polygon[0].print()} ` + polygon.slice(1).map(v => v.print()).join(' ') + ' Z');
+	.attr('d', _ => `M ${polygon[0].print(xform, yform)} ` + polygon.slice(1).map(v => v.print(xform, yform)).join(' ') + ' Z');
 }
 
 function drawPenroseTiling() {
@@ -246,14 +253,20 @@ function drawPenroseTiling() {
     while (triangles.length / 2 < minimum);
     discarded.forEach(tri => tri.fillColor = 'none');
     draw('svg#gnomon', triangles, discarded, polygon);
+    // svg viewBox distorts things; we want to zoom in without making lines thicker
+    // assume svg is wider than tall, and tiles are aspect ratio 1 
     const tl = new Vector(
 	d3.min(triangles, tri => d3.min([tri.v1.x, tri.v2.x, tri.v3.x])),
 	d3.min(triangles, tri => d3.min([tri.v1.y, tri.v2.y, tri.v3.y])));
     const br = new Vector(
 	d3.max(triangles, tri => d3.max([tri.v1.x, tri.v2.x, tri.v3.x])),
 	d3.max(triangles, tri => d3.max([tri.v1.y, tri.v2.y, tri.v3.y])));
-    d3.select('svg#tiles').attr('viewBox', [tl.x, tl.y, br.x - tl.x, br.y - tl.y].join(' '));
-    draw('svg#tiles', triangles, [], polygon);
+    const twidth = +d3.select('svg#tiles').nodes()[0].clientWidth,
+	  theight =  +d3.select('svg#tiles').nodes()[0].clientHeight;
+    const rwidth = br.x - tl.x, rheight = br.y - tl.y;
+    const ofs = new Vector((twidth - theight)/2, 0);
+    const scale = new Vector(theight/rheight, theight/rheight);
+    draw('svg#tiles', triangles, [], polygon, tl, ofs, scale);
 }
 
 
