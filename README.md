@@ -2,7 +2,7 @@
 
 A library to generate P3 tiles inside a polygon, based on [apaleyes/penrose-tiling](https://github.com/apaleyes/penrose-tiling).
 
-**NOTE**: This is a work in progress. So far it is just a port to D3 of penrose-tiling, and other pieces. Tatham's algorithm is not implemented yet, and Tatham  coordinates are likely to be incorrect.
+This is a work in progress, currently [just a demo](https://gordonwoodhull.github.io/penrose-fill-polygon/penrose.html) of filling an approximate number of random Penrose tiles in a polygon. The goal is a library which produces tile coordinates & rotation, as well as adjacency information. 
 
 Simon Tatham describes a simple algorithm for finding a random tiling of P3 rhombuses in ["Choosing a random patch from a fixed expansion"](https://www.chiark.greenend.org.uk/~sgtatham/quasiblog/aperiodic-tilings/#random-patch). This works perfectly for a [Penrose P3 tiling](https://en.wikipedia.org/wiki/Penrose_tiling#Rhombus_tiling_(P3)), so we don't need the more advanced technique he describes later. 
 
