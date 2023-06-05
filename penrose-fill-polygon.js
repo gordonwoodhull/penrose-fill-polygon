@@ -255,7 +255,7 @@ function drawPenroseTiling() {
     while (triangles.length / 2 < minimum);
     const dt = performance.now() - startt;
     discarded.forEach(tri => tri.fillColor = 'none');
-    d3.select('#readout').html(`<div>center: ${center.print()}</div><div>r: ${r.toFixed(4)}</div><div>calculation time:${dt} milliseconds</div>`);
+    d3.select('#readout').html(`<div>center: ${center.print()}</div><div>r: ${r.toFixed(4)}</div><div>calculation time:${dt}ms</div>`);
     draw('svg#gnomon', triangles, discarded, polygon);
     // svg viewBox distorts things; we want to zoom in without making lines thicker
     // assume svg is wider than tall, and tiles are aspect ratio 1 
