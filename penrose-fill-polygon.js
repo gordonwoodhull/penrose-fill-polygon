@@ -225,7 +225,7 @@ function drawPenroseTiling() {
     var gnomon = new ThickRightTriangle(new Vector(width / 2.0, 0), new Vector(width, width / 2.0 * ratio), new Vector(0, width / 2.0 * ratio), 'D');
     var triangles = [gnomon];
     let center,
-	r = d3.randomUniform(width/100, width/8)(),
+	r = d3.randomUniform(width/1000, width/8)(),
 	xrand = d3.randomUniform(r, width-r),
 	yrand = d3.randomUniform(r, width / 2.0 * ratio - r),
 	polygon, tinytris;
@@ -236,6 +236,8 @@ function drawPenroseTiling() {
 	// it's not like we need to speed this up
 	tinytris = polygon.map(p => new Triangle(p, new Vector(p.x + 0.0001, p.y + 0.0001), new Vector(p.x - 0.0002, p.y)));
     } while(!tinytris.every(tri => trianglesIntersect(tri, gnomon)));
+
+    d3.select('#readout').html(`<div>center: ${center.print()}</div><div>r: ${r.toFixed(4)}</div>`);
     const polyTris = triangulate(polygon);
 
     const discarded = [];
