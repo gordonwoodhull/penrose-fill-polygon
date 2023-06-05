@@ -221,6 +221,7 @@ function drawPenroseTiling() {
     var init_shape = document.querySelector('input[name="init_shape"]:checked').value;
     const width = +d3.select('svg#gnomon').nodes()[0].clientWidth,
 	  height =  +d3.select('svg#gnomon').nodes()[0].clientHeight;
+    const startt = performance.now();
     var ratio = Math.sin(36 * (Math.PI / 180)) / Math.sin(54 * (Math.PI / 180));
     var gnomon = new ThickRightTriangle(new Vector(width / 2.0, 0), new Vector(width, width / 2.0 * ratio), new Vector(0, width / 2.0 * ratio), 'D');
     var triangles = [gnomon];
@@ -237,7 +238,6 @@ function drawPenroseTiling() {
 	tinytris = polygon.map(p => new Triangle(p, new Vector(p.x + 0.0001, p.y + 0.0001), new Vector(p.x - 0.0002, p.y)));
     } while(!tinytris.every(tri => trianglesIntersect(tri, gnomon)));
 
-    d3.select('#readout').html(`<div>center: ${center.print()}</div><div>r: ${r.toFixed(4)}</div>`);
     const polyTris = triangulate(polygon);
 
     const discarded = [];
@@ -253,7 +253,10 @@ function drawPenroseTiling() {
         triangles = new_triangles.filter(tri => polyTris.some(ptri => trianglesIntersect(ptri, tri)));
     }
     while (triangles.length / 2 < minimum);
+    const dt = performance.now() - startt;
+    console.log(`calculation took ${dt} milliseconds`);
     discarded.forEach(tri => tri.fillColor = 'none');
+    d3.select('#readout').html(`<div>center: ${center.print()}</div><div>r: ${r.toFixed(4)}</div>`);
     draw('svg#gnomon', triangles, discarded, polygon);
     // svg viewBox distorts things; we want to zoom in without making lines thicker
     // assume svg is wider than tall, and tiles are aspect ratio 1 
