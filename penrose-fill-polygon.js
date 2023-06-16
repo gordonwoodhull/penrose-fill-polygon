@@ -82,7 +82,7 @@ class Triangle {
     }
 }
 
-// X
+// D
 class ThinLeftTriangle extends Triangle {
     constructor(v1, v2, v3, coord) {
         super(v1, v2, v3, coord, 'blue');
@@ -100,7 +100,7 @@ class ThinLeftTriangle extends Triangle {
     }
 }
 
-// Y
+// C
 class ThinRightTriangle extends Triangle {
     constructor(v1, v2, v3, coord) {
         super(v1, v2, v3, coord, 'blue');
@@ -111,14 +111,14 @@ class ThinRightTriangle extends Triangle {
         var split_point_12 = this.v1.add(vector_12);
 
         var new_triangles = []
-        new_triangles.push(new ThinRightTriangle(this.v3, split_point_12, this.v2, 'Y' + this.coord));
-        new_triangles.push(new ThickRightTriangle(split_point_12, this.v3, this.v1, 'C' + this.coord));
+        new_triangles.push(new ThinRightTriangle(this.v3, split_point_12, this.v2, 'C' + this.coord));
+        new_triangles.push(new ThickRightTriangle(split_point_12, this.v3, this.v1, 'Y' + this.coord));
 
         return new_triangles;
     }
 }
 
-// C
+// X
 class ThickLeftTriangle extends Triangle {
     constructor(v1, v2, v3, coord) {
         super(v1, v2, v3, coord, 'red');
@@ -132,15 +132,15 @@ class ThickLeftTriangle extends Triangle {
         var split_point_31 = this.v3.add(vector_31);
 
         var new_triangles = [];
-        new_triangles.push(new ThickRightTriangle(split_point_31, split_point_32, this.v3, 'X' + this.coord));
-        new_triangles.push(new ThinRightTriangle(split_point_32, split_point_31, this.v1, 'D' + this.coord));
-        new_triangles.push(new ThickLeftTriangle(split_point_32, this.v1, this.v2, 'C' + this.coord));
+        new_triangles.push(new ThickRightTriangle(split_point_31, split_point_32, this.v3, 'Y' + this.coord));
+        new_triangles.push(new ThinRightTriangle(split_point_32, split_point_31, this.v1, 'C' + this.coord));
+        new_triangles.push(new ThickLeftTriangle(split_point_32, this.v1, this.v2, 'X' + this.coord));
 
         return new_triangles;
     }
 }
 
-// D
+// Y
 class ThickRightTriangle extends Triangle {
     constructor(v1, v2, v3, coord) {
         super(v1, v2, v3, coord, 'red');
@@ -155,8 +155,8 @@ class ThickRightTriangle extends Triangle {
 
         var new_triangles = [];
         new_triangles.push(new ThickRightTriangle(split_point_23, this.v3, this.v1, 'Y' + this.coord));
-        new_triangles.push(new ThinLeftTriangle(split_point_23, this.v1, split_point_21, 'C' + this.coord));
-        new_triangles.push(new ThickLeftTriangle(split_point_21, this.v2, split_point_23, 'D' + this.coord));
+        new_triangles.push(new ThinLeftTriangle(split_point_23, this.v1, split_point_21, 'D' + this.coord));
+        new_triangles.push(new ThickLeftTriangle(split_point_21, this.v2, split_point_23, 'X' + this.coord));
 
         return new_triangles;
     }
@@ -241,8 +241,22 @@ function drawPenroseTiling() {
 	  height =  +d3.select('svg#gnomon').nodes()[0].clientHeight;
     const startt = performance.now();
     var ratio = Math.sin(36 * (Math.PI / 180)) / Math.sin(54 * (Math.PI / 180));
-    var gnomon = new ThickRightTriangle(new Vector(width / 2.0, 0), new Vector(width, width / 2.0 * ratio), new Vector(0, width / 2.0 * ratio), 'D');
-    var triangles = [gnomon];
+    var startri = null;
+    switch(startile) {
+    case 'C':
+	startri = new ThinRightTriangle(new Vector(width / 2 - height / 2 / ratio, height / 2), new Vector(width / 2 + height / 2 / ratio, 0), new Vector(width / 2 + height / 2 / ratio, height), startile);
+	break;
+    case 'D':
+	startri = new ThinLeftTriangle(new Vector(width / 2 - height / 2 / ratio, height / 2), new Vector(width / 2 + height / 2 / ratio, 0), new Vector(width / 2 + height / 2 / ratio, height), startile);
+	break;
+    case 'X':
+	startri = new ThickLeftTriangle(new Vector(width / 2.0, 0), new Vector(width, width / 2.0 * ratio), new Vector(0, width / 2.0 * ratio), startile);
+	break;
+    case 'Y':
+	startri = new ThickRightTriangle(new Vector(width / 2.0, 0), new Vector(width, width / 2.0 * ratio), new Vector(0, width / 2.0 * ratio), startile);
+	break;
+    }
+    var triangles = [startri];
     let center,
 	r = d3.randomUniform(width/1000, width/8)(),
 	xrand = d3.randomUniform(r, width-r),
@@ -254,7 +268,7 @@ function drawPenroseTiling() {
 	// this is dumb; we want point in polygon but we have the hammer of triangle intersection
 	// it's not like we need to speed this up
 	tinytris = polygon.map(p => new Triangle(p, new Vector(p.x + 0.0001, p.y + 0.0001), new Vector(p.x - 0.0002, p.y)));
-    } while(!tinytris.every(tri => trianglesIntersect(tri, gnomon)));
+    } while(!tinytris.every(tri => trianglesIntersect(tri, startri)));
 
     const polyTris = triangulate(polygon);
 
@@ -295,6 +309,7 @@ function drawPenroseTiling() {
 const urlParams = new URLSearchParams(window.location.search);
 const depth = urlParams.get('depth');
 const shape = urlParams.get('shape');
+const startile = urlParams.get('tile') || 'X';
 const showIndex = urlParams.get('coord') !== null;
 
 if(depth !== null) {
