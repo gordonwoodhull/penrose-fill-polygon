@@ -215,11 +215,11 @@ function draw(selector, triangles, discarded, polygon, tl = null, ofs = null, sc
 	.join('path')
 	.attr('class', 'robinson')
 	.attr('d', tri => `M ${xform(tri.v1.x)}, ${yform(tri.v1.y)} L ${xform(tri.v2.x)}, ${yform(tri.v2.y)} L ${xform(tri.v3.x)}, ${yform(tri.v3.y)} Z`)
-	.attr('fill', tri => tri.fillColor)
+	.style('fill', tri => tri.fillColor)
 	.on('click', (_, d) => highlightNeighbors(selector, d.coord));
     if(showIndex) {
 	d3.select(`${selector} g#triangles`)
-	    .selectAll('text.robinson').data(triangles)
+	    .selectAll('text.robinson').data(triangles.concat(discarded))
 	    .join('text')
 	    .attr('class', 'robinson')
 	    .attr('x', tri => xform((tri.v1.x + tri.v2.x + tri.v3.x) / 3))
