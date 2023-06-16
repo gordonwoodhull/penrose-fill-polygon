@@ -188,6 +188,22 @@ function triangulate(polygon) {
 
 const fixed = x => x.toFixed(3);
 
+
+function highlightNeighbors(selector, coord) {
+    // fake until we implement Tatham coordinates
+    const others = ['C', 'D', 'X', 'Y'].filter(x => x !== coord[0]);
+    const neighbors = d3.range(3).map(i => others[i] + coord.slice(1));
+    console.log(neighbors[2]);
+    d3.selectAll(`${selector} g#triangles text.robinson`)
+	.classed('side0', d => d.coord === neighbors[0])
+	.classed('side1', d => d.coord === neighbors[1])
+	.classed('side2', d => d.coord === neighbors[2]);
+    d3.selectAll(`${selector} g#triangles path.robinson`)
+	.classed('side0', d => d.coord === neighbors[0])
+	.classed('side1', d => d.coord === neighbors[1])
+	.classed('side2', d => d.coord === neighbors[2]);
+}
+
 function draw(selector, triangles, discarded, polygon, tl = null, ofs = null, scale = null) {
     tl = tl || new Vector(0, 0);
     ofs = ofs || new Vector(0, 0);
@@ -199,7 +215,8 @@ function draw(selector, triangles, discarded, polygon, tl = null, ofs = null, sc
 	.join('path')
 	.attr('class', 'robinson')
 	.attr('d', tri => `M ${xform(tri.v1.x)}, ${yform(tri.v1.y)} L ${xform(tri.v2.x)}, ${yform(tri.v2.y)} L ${xform(tri.v3.x)}, ${yform(tri.v3.y)} Z`)
-	.attr('fill', tri => tri.fillColor);
+	.attr('fill', tri => tri.fillColor)
+	.on('click', (_, d) => highlightNeighbors(selector, d.coord));
     if(showIndex) {
 	d3.select(`${selector} g#triangles`)
 	    .selectAll('text.robinson').data(triangles)
@@ -207,7 +224,8 @@ function draw(selector, triangles, discarded, polygon, tl = null, ofs = null, sc
 	    .attr('class', 'robinson')
 	    .attr('x', tri => xform((tri.v1.x + tri.v2.x + tri.v3.x) / 3))
 	    .attr('y', tri => yform((tri.v1.y + tri.v2.y + tri.v3.y) / 3))
-	    .text(tri => tri.coord);
+	    .text(tri => tri.coord)
+	    .on('click', (_, d) => highlightNeighbors(selector, d.coord));
     }
     d3.select(`${selector} g#polygon`)
 	.selectAll('path.polygon').data([0])
