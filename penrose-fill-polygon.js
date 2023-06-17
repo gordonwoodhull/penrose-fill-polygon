@@ -409,13 +409,24 @@ function drawPenroseTiling() {
 	hash[t.coord] = t;
     const disind = [];
     for(var i = 0; i < triangles.length; i++) {
-	const [oh, _] = tatham_neighbor(t.coord, 0);
-	if(!hash[oh])
+	const co = triangles[i].coord;
+	const [oh, _] = tatham_neighbor(co, 0);
+	const other = hash[oh];
+	if(!other) {
 	    disind.push(i);
+	    continue;
+	}
+	continue;
+	const rhombnei = d3.range(1,3).flatMap(side => [tatham_neighbor(co, side)[0], tatham_neighbor(oh, side)[0]]);
+	if(rhombnei.filter(oc => hash[oc]).length < 2) {
+	    disind.push(i);
+	    disind.push(triangles.findIndex(tri => tri.coord === oh));
+	}
     }
+    disind.sort().reverse(); 
     const discard = [];
-    for(i = disind.length - 1; i >= 0; i--) {
-	discard.push(triangles[disind[i]));
+    for(i of disind) {
+	discard.push(triangles[disind[i]]);
 	triangles.splice(disind[i], 1);
     }
     d3.select('#readout').html(`<div>center: ${center.print()}</div><div>r: ${r.toFixed(4)}</div><div>triangles found: ${triangles.length}</div><div>calculation time:${dt}ms</div>`);
