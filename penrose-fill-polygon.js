@@ -92,7 +92,7 @@ class ThinLeftTriangle extends Triangle {
         var vector_13 = Vector.fromPoints(this.v1, this.v3).multiply(GOLDEN_RATIO);
         var split_point_13 = this.v1.add(vector_13);
 
-        var new_triangles = []
+        var new_triangles = [];
         new_triangles.push(new ThinLeftTriangle(this.v2, this.v3, split_point_13, 'D' + this.coord));
         new_triangles.push(new ThickLeftTriangle(split_point_13, this.v1, this.v2, 'X' + this.coord));
 
@@ -110,7 +110,7 @@ class ThinRightTriangle extends Triangle {
         var vector_12 = Vector.fromPoints(this.v1, this.v2).multiply(GOLDEN_RATIO);
         var split_point_12 = this.v1.add(vector_12);
 
-        var new_triangles = []
+        var new_triangles = [];
         new_triangles.push(new ThinRightTriangle(this.v3, split_point_12, this.v2, 'C' + this.coord));
         new_triangles.push(new ThickRightTriangle(split_point_12, this.v3, this.v1, 'Y' + this.coord));
 
@@ -220,26 +220,32 @@ const other_hand = {
     r: 'l'
 };
 
-const rtri_returns = {
+const rtri_entries = {
     C: {
-	0: 'C',
-	1: {l: 'Y', r: 'C'},
-	2: 'Y'
+	0: {w: {part: 'C', side: 2}},
+	1: {l: {part: 'Y', side: 2},
+	    r: {part: 'C', side: 0}},
+	2: {w: {part: 'Y', side: 0}}
     },
     D: {
-	0: 'D',
-	1: 'X',
-	2: {l: 'D', r: 'X'}
+	0: {w: {part: 'D', side: 1}},
+	1: {w: {part: 'X', side: 0}},
+	2: {l: {part: 'D', side: 0},
+	    r: {part: 'X', side: 1}}
     },
     X: {
-	0: {l: 'X', r: 'Y'},
-	1: 'X',
-	2: {l: 'Y', r: 'C'}
+	0: {l: {part: 'X', side: 2},
+	    r: {part: 'Y', side: 0}},
+	1: {w: {part: 'X', side: 0}},
+	2: {l: {part: 'Y', side: 2},
+	    r: {part: 'C', side: 0}}
     },
     Y: {
-	0: {l: 'X', r: 'Y'},
-	1: {l: 'D', r: 'X'},
-	2: 'Y'
+	0: {l: {part: 'X', side: 0},
+	    r: {part: 'Y', side: 1}},
+	1: {l: {part: 'D', side: 0},
+	    r: {part: 'X', side: 1}},
+	2: {w: {part: 'Y', side: 0}}
     }
 }
 
@@ -253,13 +259,20 @@ function tatham_neighbor(coord, side) {
     var result;
     if(nei.external) {
 	console.assert(nei.side !== undefined);
-	const search = tatham_neighbor(coord.slice(1), nei.side);
-	const other = rtri_returns[search[0]][nei.side];
-	const pref = nei.hand ? other[other_hand[nei.hand]] : other;
-	return pref + search;
+	const [parent, pside] = tatham_neighbor(coord.slice(1), nei.side);
+	const enter = rtri_entries[parent[0]][pside];
+	let part, side;
+	if(nei.hand) {
+	    console.assert(enter.l);
+	    ({part, side} = enter[other_hand[nei.hand]]);
+	} else {
+	    console.assert(enter.w);
+	    ({part, side} = enter.w);
+	}
+	return [part + parent, side];
     }
     else {
-	return rtri_returns[nei.prefix][nei.enter] + nei.prefix + coord.slice(1);
+	return [nei.prefix + coord.slice(1), nei.enter];
     }
 }
 	
@@ -293,22 +306,21 @@ const fixed = x => x.toFixed(3);
 
 
 function highlightNeighbors(selector, coord) {
-    // fake until we implement Tatham coordinates
-    // const others = ['C', 'D', 'X', 'Y'].filter(x => x !== coord[0]);
-    // const neighbors = d3.range(3).map(i => others[i] + coord.slice(1));
-    const neighbors = d3.range(3).map(i => tatham_neighbor(coord, i));
-    console.log(neighbors[2]);
+    const neighbors = d3.range(3).map(i => tatham_neighbor(coord, i)[0]);
+    console.log(neighbors);
     d3.selectAll(`${selector} g#triangles text.robinson`)
+	.classed('over', d => d.coord === coord)
 	.classed('side0', d => d.coord === neighbors[0])
 	.classed('side1', d => d.coord === neighbors[1])
 	.classed('side2', d => d.coord === neighbors[2]);
     d3.selectAll(`${selector} g#triangles path.robinson`)
+	.classed('over', d => d.coord === coord)
 	.classed('side0', d => d.coord === neighbors[0])
 	.classed('side1', d => d.coord === neighbors[1])
 	.classed('side2', d => d.coord === neighbors[2]);
 }
 
-function draw(selector, triangles, discarded, polygon, tl = null, ofs = null, scale = null) {
+function drawTriangles(selector, triangles, discarded, polygon, tl = null, ofs = null, scale = null) {
     tl = tl || new Vector(0, 0);
     ofs = ofs || new Vector(0, 0);
     scale = scale || new Vector(1, 1);
@@ -320,7 +332,7 @@ function draw(selector, triangles, discarded, polygon, tl = null, ofs = null, sc
 	.attr('class', 'robinson')
 	.attr('d', tri => `M ${xform(tri.v1.x)}, ${yform(tri.v1.y)} L ${xform(tri.v2.x)}, ${yform(tri.v2.y)} L ${xform(tri.v3.x)}, ${yform(tri.v3.y)} Z`)
 	.style('fill', tri => tri.fillColor)
-	.on('click', (_, d) => highlightNeighbors(selector, d.coord));
+	.on('mouseover', (_, d) => highlightNeighbors(selector, d.coord));
     if(showIndex) {
 	d3.select(`${selector} g#triangles`)
 	    .selectAll('text.robinson').data(triangles.concat(discarded))
@@ -329,7 +341,7 @@ function draw(selector, triangles, discarded, polygon, tl = null, ofs = null, sc
 	    .attr('x', tri => xform((tri.v1.x + tri.v2.x + tri.v3.x) / 3))
 	    .attr('y', tri => yform((tri.v1.y + tri.v2.y + tri.v3.y) / 3))
 	    .text(tri => tri.coord)
-	    .on('click', (_, d) => highlightNeighbors(selector, d.coord));
+	    .on('mouseover', (_, d) => highlightNeighbors(selector, d.coord));
     }
     d3.select(`${selector} g#polygon`)
 	.selectAll('path.polygon').data([0])
@@ -392,7 +404,7 @@ function drawPenroseTiling() {
     const dt = performance.now() - startt;
     discarded.forEach(tri => tri.fillColor = 'none');
     d3.select('#readout').html(`<div>center: ${center.print()}</div><div>r: ${r.toFixed(4)}</div><div>triangles found: ${triangles.length}</div><div>calculation time:${dt}ms</div>`);
-    draw('svg#gnomon', triangles, discarded, polygon);
+    drawTriangles('svg#gnomon', triangles, discarded, polygon);
     // svg viewBox distorts things; we want to zoom in without making lines thicker
     // assume svg is wider than tall, and tiles are aspect ratio 1 
     const tl = new Vector(
@@ -406,7 +418,9 @@ function drawPenroseTiling() {
     const rwidth = br.x - tl.x, rheight = br.y - tl.y;
     const ofs = new Vector((twidth - theight)/2, 0);
     const scale = new Vector(theight/rheight, theight/rheight);
-    draw('svg#tiles', triangles, [], polygon, tl, ofs, scale);
+    drawTriangles('svg#tiles', triangles, [], polygon, tl, ofs, scale);
+
+    
 }
 
 
