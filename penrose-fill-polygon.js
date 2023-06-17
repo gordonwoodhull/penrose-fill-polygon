@@ -162,6 +162,109 @@ class ThickRightTriangle extends Triangle {
     }
 }
 
+const rtri_neighbors = {
+    CC: {
+	0: {external: true, side: 1, hand: 'r'},
+	1: {prefix: 'Y', enter: 1},
+	2: {external: true, side: 0}
+    },
+    YC: {
+	0: {external: true, side: 2},
+	1: {prefix: 'C', enter: 1},
+	2: {external: true, side: 1, hand: 'l'}
+    },
+    XD: {
+	0: {external: true, side: 1},
+	1: {external: true, side: 2, hand: 'r'},
+	2: {prefix: 'D', enter: 2}
+    },
+    DD: {
+	0: {external: true, side: 2, hand: 'l'},
+	1: {external: true, side: 0},
+	2: {prefix: 'X', enter: 2}
+    },
+    YX: {
+	0: {external: true, side: 0, hand: 'r'},
+	1: {prefix: 'C', enter: 1},
+	2: {external: true, side: 2, hand: 'l'}
+    },
+    CX: {
+	0: {external: true, side: 2, hand: 'r'},
+	1: {prefix: 'Y', enter: 1},
+	2: {prefix: 'X', enter: 1}
+    },
+    XX: {
+	0: {external: true, side: 1},
+	1: {prefix: 'C', enter: 2},
+	2: {external: true, side: 0, hand: 'l'}
+    },
+    YY: {
+	0: {external: true, side: 2},
+	1: {external: true, side: 0, hand: 'r'},
+	2: {prefix: 'D', enter: 1}
+    },
+    DY: {
+	0: {external: true, side: 1, hand: 'l'},
+	1: {prefix: 'Y', enter: 2},
+	2: {prefix: 'X', enter: 2}
+    },
+    XY: {
+	0: {external: true, side: 0, hand: 'l'},
+	1: {external: true, side: 1, hand: 'r'},
+	2: {prefix: 'D', enter: 2}
+    }
+};
+
+const other_hand = {
+    l: 'r',
+    r: 'l'
+};
+
+const rtri_returns = {
+    C: {
+	0: 'C',
+	1: {l: 'Y', r: 'C'},
+	2: 'Y'
+    },
+    D: {
+	0: 'D',
+	1: 'X',
+	2: {l: 'D', r: 'X'}
+    },
+    X: {
+	0: {l: 'X', r: 'Y'},
+	1: 'X',
+	2: {l: 'Y', r: 'C'}
+    },
+    Y: {
+	0: {l: 'X', r: 'Y'},
+	1: {l: 'D', r: 'X'},
+	2: 'Y'
+    }
+}
+
+function tatham_neighbor(coord, side) {
+    if(coord.length < 2)
+	return null;
+    const pre2 = coord.slice(0, 2);
+    const neighbors = rtri_neighbors[pre2];
+    console.assert(neighbors, 'unknown prefix', pre2);
+    const nei = neighbors[side];
+    var result;
+    if(nei.external) {
+	console.assert(nei.side !== undefined);
+	const search = tatham_neighbor(coord.slice(1), nei.side);
+	const other = rtri_returns[search[0]][nei.side];
+	const pref = nei.hand ? other[other_hand[nei.hand]] : other;
+	return pref + search;
+    }
+    else {
+	return rtri_returns[nei.prefix][nei.enter] + nei.prefix + coord.slice(1);
+    }
+}
+	
+	
+
 const shape_spec = {
     square: {
 	sides: 4,
@@ -191,8 +294,9 @@ const fixed = x => x.toFixed(3);
 
 function highlightNeighbors(selector, coord) {
     // fake until we implement Tatham coordinates
-    const others = ['C', 'D', 'X', 'Y'].filter(x => x !== coord[0]);
-    const neighbors = d3.range(3).map(i => others[i] + coord.slice(1));
+    // const others = ['C', 'D', 'X', 'Y'].filter(x => x !== coord[0]);
+    // const neighbors = d3.range(3).map(i => others[i] + coord.slice(1));
+    const neighbors = d3.range(3).map(i => tatham_neighbor(coord, i));
     console.log(neighbors[2]);
     d3.selectAll(`${selector} g#triangles text.robinson`)
 	.classed('side0', d => d.coord === neighbors[0])
