@@ -403,6 +403,21 @@ function drawPenroseTiling() {
     while (triangles.length / 2 < minimum);
     const dt = performance.now() - startt;
     discarded.forEach(tri => tri.fillColor = 'none');
+
+    const hash = {};
+    for(var t of triangles)
+	hash[t.coord] = t;
+    const disind = [];
+    for(var i = 0; i < triangles.length; i++) {
+	const [oh, _] = tatham_neighbor(t.coord, 0);
+	if(!hash[oh])
+	    disind.push(i);
+    }
+    const discard = [];
+    for(i = disind.length - 1; i >= 0; i--) {
+	discard.push(triangles[disind[i]));
+	triangles.splice(disind[i], 1);
+    }
     d3.select('#readout').html(`<div>center: ${center.print()}</div><div>r: ${r.toFixed(4)}</div><div>triangles found: ${triangles.length}</div><div>calculation time:${dt}ms</div>`);
     drawTriangles('svg#gnomon', triangles, discarded, polygon);
     // svg viewBox distorts things; we want to zoom in without making lines thicker
