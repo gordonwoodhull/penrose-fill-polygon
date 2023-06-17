@@ -82,26 +82,8 @@ class Triangle {
     }
 }
 
-// D
-class ThinLeftTriangle extends Triangle {
-    constructor(v1, v2, v3, coord) {
-        super(v1, v2, v3, coord, 'blue');
-    }
-
-    split() {
-        var vector_13 = Vector.fromPoints(this.v1, this.v3).multiply(GOLDEN_RATIO);
-        var split_point_13 = this.v1.add(vector_13);
-
-        var new_triangles = [];
-        new_triangles.push(new ThinLeftTriangle(this.v2, this.v3, split_point_13, 'D' + this.coord));
-        new_triangles.push(new ThickLeftTriangle(split_point_13, this.v1, this.v2, 'X' + this.coord));
-
-        return new_triangles;
-    }
-}
-
 // C
-class ThinRightTriangle extends Triangle {
+class TriangleC extends Triangle {
     constructor(v1, v2, v3, coord) {
         super(v1, v2, v3, coord, 'blue');
     }
@@ -111,15 +93,33 @@ class ThinRightTriangle extends Triangle {
         var split_point_12 = this.v1.add(vector_12);
 
         var new_triangles = [];
-        new_triangles.push(new ThinRightTriangle(this.v3, split_point_12, this.v2, 'C' + this.coord));
-        new_triangles.push(new ThickRightTriangle(split_point_12, this.v3, this.v1, 'Y' + this.coord));
+        new_triangles.push(new TriangleC(this.v3, split_point_12, this.v2, 'C' + this.coord));
+        new_triangles.push(new TriangleY(split_point_12, this.v3, this.v1, 'Y' + this.coord));
+
+        return new_triangles;
+    }
+}
+
+// D
+class TriangleD extends Triangle {
+    constructor(v1, v2, v3, coord) {
+        super(v1, v2, v3, coord, 'blue');
+    }
+
+    split() {
+        var vector_13 = Vector.fromPoints(this.v1, this.v3).multiply(GOLDEN_RATIO);
+        var split_point_13 = this.v1.add(vector_13);
+
+        var new_triangles = [];
+        new_triangles.push(new TriangleD(this.v2, this.v3, split_point_13, 'D' + this.coord));
+        new_triangles.push(new TriangleX(split_point_13, this.v1, this.v2, 'X' + this.coord));
 
         return new_triangles;
     }
 }
 
 // X
-class ThickLeftTriangle extends Triangle {
+class TriangleX extends Triangle {
     constructor(v1, v2, v3, coord) {
         super(v1, v2, v3, coord, 'red');
     }
@@ -132,16 +132,16 @@ class ThickLeftTriangle extends Triangle {
         var split_point_31 = this.v3.add(vector_31);
 
         var new_triangles = [];
-        new_triangles.push(new ThickRightTriangle(split_point_31, split_point_32, this.v3, 'Y' + this.coord));
-        new_triangles.push(new ThinRightTriangle(split_point_32, split_point_31, this.v1, 'C' + this.coord));
-        new_triangles.push(new ThickLeftTriangle(split_point_32, this.v1, this.v2, 'X' + this.coord));
+        new_triangles.push(new TriangleY(split_point_31, split_point_32, this.v3, 'Y' + this.coord));
+        new_triangles.push(new TriangleC(split_point_32, split_point_31, this.v1, 'C' + this.coord));
+        new_triangles.push(new TriangleX(split_point_32, this.v1, this.v2, 'X' + this.coord));
 
         return new_triangles;
     }
 }
 
 // Y
-class ThickRightTriangle extends Triangle {
+class TriangleY extends Triangle {
     constructor(v1, v2, v3, coord) {
         super(v1, v2, v3, coord, 'red');
     }
@@ -154,9 +154,9 @@ class ThickRightTriangle extends Triangle {
         var split_point_23 = this.v2.add(vector_23);
 
         var new_triangles = [];
-        new_triangles.push(new ThickRightTriangle(split_point_23, this.v3, this.v1, 'Y' + this.coord));
-        new_triangles.push(new ThinLeftTriangle(split_point_23, this.v1, split_point_21, 'D' + this.coord));
-        new_triangles.push(new ThickLeftTriangle(split_point_21, this.v2, split_point_23, 'X' + this.coord));
+        new_triangles.push(new TriangleY(split_point_23, this.v3, this.v1, 'Y' + this.coord));
+        new_triangles.push(new TriangleD(split_point_23, this.v1, split_point_21, 'D' + this.coord));
+        new_triangles.push(new TriangleX(split_point_21, this.v2, split_point_23, 'X' + this.coord));
 
         return new_triangles;
     }
@@ -360,16 +360,16 @@ function drawPenroseTiling() {
     var startri = null;
     switch(startile) {
     case 'C':
-	startri = new ThinRightTriangle(new Vector(width / 2 - height / 2 / ratio, height / 2), new Vector(width / 2 + height / 2 / ratio, 0), new Vector(width / 2 + height / 2 / ratio, height), startile);
+	startri = new TriangleC(new Vector(width / 2 - height / 2 / ratio, height / 2), new Vector(width / 2 + height / 2 / ratio, 0), new Vector(width / 2 + height / 2 / ratio, height), startile);
 	break;
     case 'D':
-	startri = new ThinLeftTriangle(new Vector(width / 2 - height / 2 / ratio, height / 2), new Vector(width / 2 + height / 2 / ratio, 0), new Vector(width / 2 + height / 2 / ratio, height), startile);
+	startri = new TriangleD(new Vector(width / 2 - height / 2 / ratio, height / 2), new Vector(width / 2 + height / 2 / ratio, 0), new Vector(width / 2 + height / 2 / ratio, height), startile);
 	break;
     case 'X':
-	startri = new ThickLeftTriangle(new Vector(width / 2.0, 0), new Vector(width, width / 2.0 * ratio), new Vector(0, width / 2.0 * ratio), startile);
+	startri = new TriangleX(new Vector(width / 2.0, 0), new Vector(width, width / 2.0 * ratio), new Vector(0, width / 2.0 * ratio), startile);
 	break;
     case 'Y':
-	startri = new ThickRightTriangle(new Vector(width / 2.0, 0), new Vector(width, width / 2.0 * ratio), new Vector(0, width / 2.0 * ratio), startile);
+	startri = new TriangleY(new Vector(width / 2.0, 0), new Vector(width, width / 2.0 * ratio), new Vector(0, width / 2.0 * ratio), startile);
 	break;
     }
     var triangles = [startri];
