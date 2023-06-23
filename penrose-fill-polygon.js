@@ -162,6 +162,18 @@ class TriangleY extends Triangle {
     }
 }
 
+class Rhombus {
+    constructor(v1, v2, v3, v4, coord, fillColor) {
+        this.v1 = v1;
+        this.v2 = v2;
+        this.v3 = v3;
+	this.v4 = v4;
+
+        this.fillColor = fillColor;
+	this.coord = coord;
+    }
+}
+
 const rtri_neighbors = {
     CC: {
 	0: {external: true, side: 1, hand: 'r'},
@@ -251,7 +263,7 @@ const rtri_entries = {
 
 function tatham_neighbor(coord, side) {
     if(coord.length < 2)
-	return null;
+	throw new Error("no neighbor");
     const pre2 = coord.slice(0, 2);
     const neighbors = rtri_neighbors[pre2];
     console.assert(neighbors, 'unknown prefix', pre2);
@@ -304,7 +316,16 @@ const fixed = x => x.toFixed(3);
 
 
 function highlightNeighbors(selector, coord) {
-    const neighbors = d3.range(3).map(i => tatham_neighbor(coord, i)[0]);
+    const neighbors = d3.range(3).map(i => {
+	var nei;
+	try {
+	    nei = tatham_neighbor(coord, i)[0];
+        }
+	catch(xep) {
+	    console.warn('no neighbor for', coord);
+	}
+	return nei;
+    });
     console.log(neighbors);
     d3.selectAll(`${selector} g#triangles text.robinson`)
 	.classed('over', d => d.coord === coord)
@@ -339,6 +360,37 @@ function drawTriangles(selector, triangles, discarded, polygon, tl = null, ofs =
 	    .attr('x', tri => xform((tri.v1.x + tri.v2.x + tri.v3.x) / 3))
 	    .attr('y', tri => yform((tri.v1.y + tri.v2.y + tri.v3.y) / 3))
 	    .text(tri => tri.coord)
+	    .on('mouseover', (_, d) => highlightNeighbors(selector, d.coord));
+    }
+    d3.select(`${selector} g#polygon`)
+	.selectAll('path.polygon').data([0])
+	.join('path')
+	.attr('class', 'polygon')
+	.attr('d', _ => `M ${polygon[0].print(xform, yform)} ` + polygon.slice(1).map(v => v.print(xform, yform)).join(' ') + ' Z');
+}
+
+function drawRhombuses(selector, rhombhash, polygon, tl = null, ofs = null, scale = null) {
+    tl = tl || new Vector(0, 0);
+    ofs = ofs || new Vector(0, 0);
+    scale = scale || new Vector(1, 1);
+    const xform = x => (x - tl.x) * scale.x + ofs.x;
+    const yform = y => (y - tl.y) * scale.y + ofs.y;
+    const rhombuses = Object.values(rhombhash).map(({rhombus}) => rhombus);
+    d3.select(`${selector} g#rhombuses`)
+	.selectAll('path.robinson').data(rhombuses)
+	.join('path')
+	.attr('class', 'robinson')
+	.attr('d', rhomb => `M ${xform(rhomb.v1.x)}, ${yform(rhomb.v1.y)} L ${xform(rhomb.v2.x)}, ${yform(rhomb.v2.y)} L ${xform(rhomb.v3.x)}, ${yform(rhomb.v3.y)} L ${xform(rhomb.v4.x)}, ${yform(rhomb.v4.y)} Z`)
+	.style('fill', rhomb => rhomb.fillColor)
+	.on('mouseover', (_, d) => highlightNeighbors(selector, d.coord));
+    if(showIndex) {
+	d3.select(`${selector} g#rhombuses`)
+	    .selectAll('text.robinson').data(rhombuses)
+	    .join('text')
+	    .attr('class', 'robinson')
+	    .attr('x', rhomb => xform((rhomb.v1.x + rhomb.v2.x + rhomb.v3.x + rhomb.v4.x) / 4))
+	    .attr('y', rhomb => yform((rhomb.v1.y + rhomb.v2.y + rhomb.v3.y + rhomb.v4.y) / 4))
+	    .text(rhomb => rhomb.coord)
 	    .on('mouseover', (_, d) => highlightNeighbors(selector, d.coord));
     }
     d3.select(`${selector} g#polygon`)
@@ -397,25 +449,75 @@ function drawPenroseTiling() {
         triangles = new_triangles.filter(tri => polyTris.some(ptri => trianglesIntersect(ptri, tri)));
     }
     while (triangles.length / 2 < minimum);
-    const dt = performance.now() - startt;
 
-    const hash = {};
+    const trihash = {};
     for(var t of triangles)
-	hash[t.coord] = t;
+	trihash[t.coord] = t;
     const disind = [];
-    for(var i = 0; i < triangles.length; i++) {
-	const [oh, _] = tatham_neighbor(t.coord, 0);
-	if(!hash[oh])
+    const rhombhash = {};
+    const tri2rhomb = {};
+    for(var [i, t] of triangles.entries()) {
+	var oh = null;
+	try {
+	    oh = tatham_neighbor(t.coord, 0)[0];
+	}
+	catch(xep) {
+	    console.warn('no neighbor', 0, 'for', t.coord);
+	}
+	var t2;
+	if(!oh || !(t2 = trihash[oh]))
 	    disind.push(i);
+	else {
+	    const rhombcoord = [t.coord, oh].sort().join(',');
+	    if(rhombhash[rhombcoord])
+		continue;
+	    else {
+		tri2rhomb[t.coord] = rhombcoord;
+		tri2rhomb[oh] = rhombcoord;
+		const rhombus = new Rhombus(t.v1, t.v2, t2.v1, t2.v2, rhombcoord, t.fillColor);
+		rhombhash[rhombcoord] = {
+		    rhombus,
+		    tri1: t,
+		    tri2: t2
+		};
+	    }
+	}
     }
-    const culled = [];
+    const culledTris = [];
     for(i = disind.length - 1; i >= 0; i--) {
-	culled.push(triangles[disind[i]]);
+	culledTris.push(triangles[disind[i]]);
 	triangles.splice(disind[i], 1);
     }
-    discarded.concat(culled).forEach(tri => tri.fillColor = 'none');
-    d3.select('#readout').html(`<div>center: ${center.print()}</div><div>r: ${r.toFixed(4)}</div><div>triangles found: ${triangles.length}</div><div>calculation time:${dt}ms</div>`);
-    drawTriangles('svg#gnomon', triangles, discarded.concat(culled), polygon);
+    for(const [rhombcoord, {tri1, tri2, rhombus}] of Object.entries(rhombhash)) {
+	const neighbors = [];
+	var j = 0;
+	// X1, X2, Y1, Y2 or C1, C2, D1, D2
+	for(const tri of [tri1, tri2])
+	    for(const side of [1, 2]) {
+		var nei = null;
+		try {
+		    nei = tatham_neighbor(tri.coord, side);
+		}
+		catch(xep) {
+		    console.warn('no neighbor', side, 'for', tri.coord);
+		}
+		const rhombnei = nei && tri2rhomb[nei] || null;
+		neighbors.push(rhombnei);
+	    }
+	rhombhash[rhombcoord].neighbors = neighbors;
+    }
+		
+    
+    const dt = performance.now() - startt;
+    discarded.concat(culledTris).forEach(tri => tri.fillColor = 'none');
+    d3.select('#readout').html(`
+<div>center: ${center.print()}</div>
+<div>r: ${r.toFixed(4)}</div>
+<div>triangles found: ${triangles.length}</div>
+<div>discarded indices: ${disind.length}</div>
+<div>triangles culled: ${culledTris.length}</div>
+<div>calculation time:${dt}ms</div>`);
+    drawTriangles('svg#gnomon', triangles, discarded.concat(culledTris), polygon);
     // svg viewBox distorts things; we want to zoom in without making lines thicker
     // assume svg is wider than tall, and tiles are aspect ratio 1 
     const tl = new Vector(
@@ -429,9 +531,10 @@ function drawPenroseTiling() {
     const rwidth = br.x - tl.x, rheight = br.y - tl.y;
     const ofs = new Vector((twidth - theight)/2, 0);
     const scale = new Vector(theight/rheight, theight/rheight);
-    drawTriangles('svg#tiles', triangles, culled, polygon, tl, ofs, scale);
-
-    
+    if(drawlevel === 'triangle')
+	drawTriangles('svg#tiles', triangles, culledTris, polygon, tl, ofs, scale);
+    else if(drawlevel === 'rhombus')
+	drawRhombuses('svg#tiles', rhombhash, polygon, tl, ofs, scale);
 }
 
 
@@ -440,6 +543,7 @@ const depth = urlParams.get('depth');
 const shape = urlParams.get('shape');
 const startile = urlParams.get('tile') || 'X';
 const showIndex = urlParams.get('coord') !== null;
+const drawlevel = urlParams.get('draw') || 'rhombus';
 
 if(depth !== null) {
     d3.select('#minimum').property('value', depth);
