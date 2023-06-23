@@ -275,8 +275,6 @@ function tatham_neighbor(coord, side) {
 	return [nei.prefix + coord.slice(1), nei.enter];
     }
 }
-	
-	
 
 const shape_spec = {
     square: {
@@ -391,8 +389,6 @@ function drawPenroseTiling() {
     const discarded = [];
     do {
         var new_triangles = [];
-	
-
         for (var i = 0; i < triangles.length; i++) {
             var trig = triangles[i];
             new_triangles = new_triangles.concat(trig.split());
@@ -402,7 +398,6 @@ function drawPenroseTiling() {
     }
     while (triangles.length / 2 < minimum);
     const dt = performance.now() - startt;
-    discarded.forEach(tri => tri.fillColor = 'none');
 
     const hash = {};
     for(var t of triangles)
@@ -413,13 +408,14 @@ function drawPenroseTiling() {
 	if(!hash[oh])
 	    disind.push(i);
     }
-    const discard = [];
+    const culled = [];
     for(i = disind.length - 1; i >= 0; i--) {
-	discard.push(triangles[disind[i]));
+	culled.push(triangles[disind[i]]);
 	triangles.splice(disind[i], 1);
     }
+    discarded.concat(culled).forEach(tri => tri.fillColor = 'none');
     d3.select('#readout').html(`<div>center: ${center.print()}</div><div>r: ${r.toFixed(4)}</div><div>triangles found: ${triangles.length}</div><div>calculation time:${dt}ms</div>`);
-    drawTriangles('svg#gnomon', triangles, discarded, polygon);
+    drawTriangles('svg#gnomon', triangles, discarded.concat(culled), polygon);
     // svg viewBox distorts things; we want to zoom in without making lines thicker
     // assume svg is wider than tall, and tiles are aspect ratio 1 
     const tl = new Vector(
@@ -433,7 +429,7 @@ function drawPenroseTiling() {
     const rwidth = br.x - tl.x, rheight = br.y - tl.y;
     const ofs = new Vector((twidth - theight)/2, 0);
     const scale = new Vector(theight/rheight, theight/rheight);
-    drawTriangles('svg#tiles', triangles, [], polygon, tl, ofs, scale);
+    drawTriangles('svg#tiles', triangles, culled, polygon, tl, ofs, scale);
 
     
 }
