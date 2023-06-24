@@ -496,7 +496,7 @@ function drawPenroseTiling() {
 	    for(const side of [1, 2]) {
 		var nei = null;
 		try {
-		    nei = tatham_neighbor(tri.coord, side);
+		    [nei,_] = tatham_neighbor(tri.coord, side);
 		}
 		catch(xep) {
 		    console.warn('no neighbor', side, 'for', tri.coord);
@@ -506,7 +506,29 @@ function drawPenroseTiling() {
 	    }
 	rhombhash[rhombcoord].neighbors = neighbors;
     }
-		
+    const culledRhombs = [];
+    var cullRhombs;
+    do {
+	console.log(Object.values(rhombhash)
+		    .map(({neighbors}) => neighbors));
+	cullRhombs = Object.values(rhombhash)
+	    .filter(({neighbors}) => neighbors.filter(n => n).length < 2);
+	for(const {rhombus, neighbors} of cullRhombs) {
+	    culledRhombs.push(rhombus);
+	    for(nei of neighbors) {
+		if(!nei)
+		    continue;
+		const entry = rhombhash[nei];
+		for(const i of d3.range(4)) {
+		    if(entry.neighbors[i] === rhombus.coord)
+			entry.neighbors[i] = null;
+		}
+	    }
+	    delete rhombhash[rhombus.coord];		
+	}
+    }
+    while(cullRhombs.length);
+    
     
     const dt = performance.now() - startt;
     discarded.concat(culledTris).forEach(tri => tri.fillColor = 'none');
