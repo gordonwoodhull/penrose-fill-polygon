@@ -10,13 +10,9 @@ We put the polygon in a random place and scale inside a [golden gnomon](https://
 
 Then we recursively split any triangles which intersect the polygon using [Robinson triangle decompositions](https://en.wikipedia.org/wiki/Penrose_tiling#Robinson_triangle_decompositions), and throw out the non-intersecting triangles, until we have generated enough tiles.
 
-We also use Tatham's ["Combinatorial coordinates"](https://www.chiark.greenend.org.uk/~sgtatham/quasiblog/aperiodic-tilings/#ccoords), a triangle naming system to keep track of which triangles neighbor which. He doesn't fully describe the last step:
+We also use Tatham's [combinatorial coordinates](https://www.chiark.greenend.org.uk/~sgtatham/quasiblog/aperiodic-tilings/#ccoords) to deduce which triangles are neighbors. From there, we know which triangles to combine into rhombuses, and which rhombuses are neighbors.
 
-> So we need to remember which segment of the larger edge we were crossing: were we to the left or the right of the division?
-
-> We’ll always expect to find that the incoming edge of the new large triangle is subdivided into segments in the same way, and the map for that triangle will let us find which sub-triangle corresponds to each segment of the outer edge. So you can still figure out which sub-triangle you end up in.
-
-The "map for that triangle" is `rtri_entries` in this implementation. Seems like a lot of data between that and `tri_neighbors`, so I wouldn't be surprised if there is redundancy here.
+Finally, we need to clean up the border, so currently we cull any half-rhombs and repeatedly remove any rhombus which only has one neighbor.
 
 Thanks to Andrei Paleyes for the original [penrose-tiling](https://github.com/apaleyes/penrose-tiling), which provides the Robinson triangle-splitting algorithm.
 
