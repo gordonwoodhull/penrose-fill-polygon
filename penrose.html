@@ -117,6 +117,15 @@
                     <input type="range" id="minimum" name="Minimum" min="0" max="1000" oninput="minimumOutput.value = minimum.value" value="50" />
                     <output id="minimumOutput">50</output>
                 </fieldset>
+                <fieldset>
+                    <p>Resolve ragged border</p>
+                    <div>
+                        <input type="radio" name="resolve_ragged" value="cull" checked="checked">
+                        <label>Cull</label>
+                        <input type="radio" name="resolve_ragged" value="fill">
+                        <label>Fill</label>
+                    </div>
+                </fieldset>
                 <input type="button" onclick="drawPenroseTiling();" value="Draw" />
             </div>
 	    <div id="readout"></div>

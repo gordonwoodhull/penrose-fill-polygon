@@ -314,6 +314,24 @@ function triangulate(polygon) {
 
 const fixed = x => x.toFixed(3);
 
+function generateTriangles(triangles, filt, enough) {
+    const discarded = [];
+    do {
+        var new_triangles = [];
+        for (var i = 0; i < triangles.length; i++) {
+            var trig = triangles[i];
+            new_triangles = new_triangles.concat(trig.split());
+        }
+        triangles = new_triangles.filter(tri => {
+	    if(filt(tri))
+		return true;
+	    discarded.push(tri);
+	    return false;
+	});
+    }
+    while(!enough(triangles));
+    return [triangles, discarded];
+}
 
 function highlightTriNeighbors(selector, coord) {
     const neighbors = d3.range(3).map(i => {
@@ -420,6 +438,7 @@ function drawRhombuses(selector, rhombhash, polygon, tl = null, ofs = null, scal
 function drawPenroseTiling() {
     var minimum = document.getElementById("minimum").value;
     var init_shape = document.querySelector('input[name="init_shape"]:checked').value;
+    var resolve_ragged = document.querySelector('input[name="resolve_ragged"]:checked').value;
     const width = +d3.select('svg#gnomon').nodes()[0].clientWidth,
 	  height =  +d3.select('svg#gnomon').nodes()[0].clientHeight;
     const startt = performance.now();
@@ -455,17 +474,11 @@ function drawPenroseTiling() {
 
     const polyTris = triangulate(polygon);
 
-    const discarded = [];
-    do {
-        var new_triangles = [];
-        for (var i = 0; i < triangles.length; i++) {
-            var trig = triangles[i];
-            new_triangles = new_triangles.concat(trig.split());
-        }
-	discarded.push.apply(discarded, new_triangles.filter(tri => !polyTris.some(ptri => trianglesIntersect(ptri, tri))));
-        triangles = new_triangles.filter(tri => polyTris.some(ptri => trianglesIntersect(ptri, tri)));
-    }
-    while (triangles.length / 2 < minimum);
+    var discarded;
+    [triangles, discarded] = generateTriangles(
+	triangles,
+	tri => polyTris.some(ptri => trianglesIntersect(ptri, tri)),
+	tris => tris.length / 2 > minimum);
 
     const trihash = {};
     for(var t of triangles)
@@ -523,29 +536,32 @@ function drawPenroseTiling() {
 	    }
 	rhombhash[rhombcoord].neighbors = neighbors;
     }
-    const culledRhombs = [];
-    var cullRhombs;
-    do {
-	console.log(Object.values(rhombhash)
-		    .map(({neighbors}) => neighbors));
-	cullRhombs = Object.values(rhombhash)
-	    .filter(({neighbors}) => neighbors.filter(n => n).length < 2);
-	for(const {rhombus, neighbors} of cullRhombs) {
-	    culledRhombs.push(rhombus);
-	    for(nei of neighbors) {
-		if(!nei)
-		    continue;
-		const entry = rhombhash[nei];
-		for(const i of d3.range(4)) {
-		    if(entry.neighbors[i] === rhombus.coord)
-			entry.neighbors[i] = null;
+    if(resolve_ragged === "cull") {
+	const culledRhombs = [];
+	var cullRhombs;
+	do {
+	    console.log(Object.values(rhombhash)
+			.map(({neighbors}) => neighbors));
+	    cullRhombs = Object.values(rhombhash)
+		.filter(({neighbors}) => neighbors.filter(n => n).length < 2);
+	    for(const {rhombus, neighbors} of cullRhombs) {
+		culledRhombs.push(rhombus);
+		for(nei of neighbors) {
+		    if(!nei)
+			continue;
+		    const entry = rhombhash[nei];
+		    for(const i of d3.range(4)) {
+			if(entry.neighbors[i] === rhombus.coord)
+			    entry.neighbors[i] = null;
+		    }
 		}
+		delete rhombhash[rhombus.coord];		
 	    }
-	    delete rhombhash[rhombus.coord];		
 	}
+	while(cullRhombs.length);
     }
-    while(cullRhombs.length);
-    
+    else if(resolve_ragged === "fill") {
+    }
     
     const dt = performance.now() - startt;
     discarded.concat(culledTris).forEach(tri => tri.fillColor = 'none');
@@ -580,6 +596,7 @@ function drawPenroseTiling() {
 const urlParams = new URLSearchParams(window.location.search);
 const depth = urlParams.get('depth');
 const shape = urlParams.get('shape');
+const ragged = urlParams.get('ragged');
 const startile = urlParams.get('tile') || 'X';
 const showIndex = urlParams.get('coord') !== null;
 const drawlevel = urlParams.get('draw') || 'rhombus';
@@ -589,7 +606,10 @@ if(depth !== null) {
     d3.select('#minimumOutput').text(depth);
 }
 
-allowedShapes = d3.selectAll('input[name="init_shape"]').nodes().map(elem => elem.value);
+const allowedShapes = d3.selectAll('input[name="init_shape"]').nodes().map(elem => elem.value);
 if(shape !== null && allowedShapes.includes(shape))
     d3.selectAll('input[name="init_shape"]').property('checked', function() { return this.value === shape; });
+const allowedRagged = d3.selectAll('input[name="resolve_ragged"]').nodes().map(elem => elem.value);
+if(ragged !== null && allowedRagged.includes(ragged))
+    d3.selectAll('input[name="resolve_ragged"]').property('checked', function() { return this.value === ragged; });
 
