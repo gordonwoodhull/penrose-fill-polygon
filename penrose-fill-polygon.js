@@ -344,7 +344,6 @@ function highlightTriNeighbors(selector, coord) {
 	}
 	return nei;
     });
-    console.log(neighbors);
     d3.selectAll(`${selector} g#triangles text.robinson`)
 	.classed('over', d => d.coord === coord)
 	.classed('side0', d => d.coord === neighbors[0])
@@ -389,7 +388,6 @@ function drawTriangles(selector, triangles, discarded, polygon, tl = null, ofs =
 
 function highlightRhombNeighbors(selector, rhombhash, coord) {
     const {neighbors} = rhombhash[coord];
-    console.log(neighbors);
     d3.selectAll(`${selector} g#rhombuses text.robinson`)
 	.classed('over', d => d.coord === coord)
 	.classed('side0', d => d.coord === neighbors[0])
@@ -459,6 +457,7 @@ function drawPenroseTiling() {
 	break;
     }
     var triangles = [startri];
+    console.log(startri);
     let center,
 	r = d3.randomUniform(width/1000, width/8)(),
 	xrand = d3.randomUniform(r, width-r),
@@ -484,6 +483,46 @@ function drawPenroseTiling() {
     for(var t of triangles)
 	trihash[t.coord] = t;
     const disind = [];
+    const find_tris = [];
+    for(var [i, t] of triangles.entries()) {
+	var oh = null;
+	try {
+	    oh = tatham_neighbor(t.coord, 0)[0];
+	}
+	catch(xep) {
+	    console.warn('no neighbor', 0, 'for', t.coord);
+	}
+	var t2;
+	if(!oh || !(t2 = trihash[oh])) {
+	    if(resolve_ragged === "cull")
+		disind.push(i);
+	    else if(resolve_ragged === "fill") {
+		var nei1 = null, nei2 = null, last;
+		try {
+		    nei1 = tatham_neighbor(t.coord, last = 1)[0];
+		    nei2 = tatham_neighbor(t.coord, last = 2)[0];
+		}
+		catch(xep) {
+		    console.warn('no neighbor', last, 'for', t.coord);
+		}
+		if(oh && nei1 && nei2)
+		    find_tris.push(oh);
+		else
+		    disind.push(i);
+	    }
+	}
+    }
+    var found_tris = [];
+    if(find_tris.length) {
+	console.log(startri);
+	[found_tris] = generateTriangles(
+	    [startri], 
+	    tri => find_tris.some(find => find.indexOf(tri.coord) === find.length - tri.coord.length),
+	    tris => !tris.length || tris[0].coord.length === find_tris[0].length);
+	for(const tri of found_tris)
+	    trihash[tri.coord] = tri;
+	triangles.push(...found_tris);
+    }
     const rhombhash = {};
     const tri2rhomb = {};
     for(var [i, t] of triangles.entries()) {
@@ -495,9 +534,7 @@ function drawPenroseTiling() {
 	    console.warn('no neighbor', 0, 'for', t.coord);
 	}
 	var t2;
-	if(!oh || !(t2 = trihash[oh]))
-	    disind.push(i);
-	else {
+	if(oh && (t2 = trihash[oh])) {
 	    const rhombcoord = [t.coord, oh].sort().join(',');
 	    if(rhombhash[rhombcoord])
 		continue;
@@ -536,12 +573,10 @@ function drawPenroseTiling() {
 	    }
 	rhombhash[rhombcoord].neighbors = neighbors;
     }
+    const culledRhombs = [];
     if(resolve_ragged === "cull") {
-	const culledRhombs = [];
 	var cullRhombs;
 	do {
-	    console.log(Object.values(rhombhash)
-			.map(({neighbors}) => neighbors));
 	    cullRhombs = Object.values(rhombhash)
 		.filter(({neighbors}) => neighbors.filter(n => n).length < 2);
 	    for(const {rhombus, neighbors} of cullRhombs) {
@@ -560,18 +595,22 @@ function drawPenroseTiling() {
 	}
 	while(cullRhombs.length);
     }
-    else if(resolve_ragged === "fill") {
-    }
     
     const dt = performance.now() - startt;
     discarded.concat(culledTris).forEach(tri => tri.fillColor = 'none');
-    d3.select('#readout').html(`
-<div>center: ${center.print()}</div>
+    d3.select('#readout').html(
+`<div>center: ${center.print()}</div>
 <div>r: ${r.toFixed(4)}</div>
-<div>triangles found: ${triangles.length}</div>
-<div>discarded indices: ${disind.length}</div>
+<div>triangles found: ${triangles.length}</div>` +
+	    (resolve_ragged === 'cull' ?
+`<div>discarded indices: ${disind.length}</div>
 <div>triangles culled: ${culledTris.length}</div>
-<div>calculation time:${dt}ms</div>`);
+<div>rhombs culled: ${culledRhombs.length}</div>` :
+	     resolve_ragged === 'fill' ?
+`<div>fills identified: ${find_tris.length}</div>
+<div>fills found: ${found_tris.length}</div>` :
+	     '') +
+`<div><div>calculation time:${dt}ms</div>`);
     drawTriangles('svg#gnomon', triangles, discarded.concat(culledTris), polygon);
     // svg viewBox distorts things; we want to zoom in without making lines thicker
     // assume svg is wider than tall, and tiles are aspect ratio 1 
@@ -610,6 +649,10 @@ const allowedShapes = d3.selectAll('input[name="init_shape"]').nodes().map(elem 
 if(shape !== null && allowedShapes.includes(shape))
     d3.selectAll('input[name="init_shape"]').property('checked', function() { return this.value === shape; });
 const allowedRagged = d3.selectAll('input[name="resolve_ragged"]').nodes().map(elem => elem.value);
-if(ragged !== null && allowedRagged.includes(ragged))
+if(ragged !== null && allowedRagged.includes(ragged)) {
+    if(ragged === 'fill') {
+	d3.select('#ragged-fill').style('display', null);
+	d3.select('label[for=ragged-fill]').style('display', null);
+    }
     d3.selectAll('input[name="resolve_ragged"]').property('checked', function() { return this.value === ragged; });
-
+}
