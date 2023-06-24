@@ -315,7 +315,7 @@ function triangulate(polygon) {
 const fixed = x => x.toFixed(3);
 
 
-function highlightNeighbors(selector, coord) {
+function highlightTriNeighbors(selector, coord) {
     const neighbors = d3.range(3).map(i => {
 	var nei;
 	try {
@@ -351,7 +351,7 @@ function drawTriangles(selector, triangles, discarded, polygon, tl = null, ofs =
 	.attr('class', 'robinson')
 	.attr('d', tri => `M ${xform(tri.v1.x)}, ${yform(tri.v1.y)} L ${xform(tri.v2.x)}, ${yform(tri.v2.y)} L ${xform(tri.v3.x)}, ${yform(tri.v3.y)} Z`)
 	.style('fill', tri => tri.fillColor)
-	.on('mouseover', (_, d) => highlightNeighbors(selector, d.coord));
+	.on('mouseover', (_, d) => highlightTriNeighbors(selector, d.coord));
     if(showIndex) {
 	d3.select(`${selector} g#triangles`)
 	    .selectAll('text.robinson').data(triangles.concat(discarded))
@@ -360,13 +360,30 @@ function drawTriangles(selector, triangles, discarded, polygon, tl = null, ofs =
 	    .attr('x', tri => xform((tri.v1.x + tri.v2.x + tri.v3.x) / 3))
 	    .attr('y', tri => yform((tri.v1.y + tri.v2.y + tri.v3.y) / 3))
 	    .text(tri => tri.coord)
-	    .on('mouseover', (_, d) => highlightNeighbors(selector, d.coord));
+	    .on('mouseover', (_, d) => highlightTriNeighbors(selector, d.coord));
     }
     d3.select(`${selector} g#polygon`)
 	.selectAll('path.polygon').data([0])
 	.join('path')
 	.attr('class', 'polygon')
 	.attr('d', _ => `M ${polygon[0].print(xform, yform)} ` + polygon.slice(1).map(v => v.print(xform, yform)).join(' ') + ' Z');
+}
+
+function highlightRhombNeighbors(selector, rhombhash, coord) {
+    const {neighbors} = rhombhash[coord];
+    console.log(neighbors);
+    d3.selectAll(`${selector} g#rhombuses text.robinson`)
+	.classed('over', d => d.coord === coord)
+	.classed('side0', d => d.coord === neighbors[0])
+	.classed('side1', d => d.coord === neighbors[1])
+	.classed('side2', d => d.coord === neighbors[2])
+	.classed('side3', d => d.coord === neighbors[3]);
+    d3.selectAll(`${selector} g#rhombuses path.robinson`)
+	.classed('over', d => d.coord === coord)
+	.classed('side0', d => d.coord === neighbors[0])
+	.classed('side1', d => d.coord === neighbors[1])
+	.classed('side2', d => d.coord === neighbors[2])
+	.classed('side3', d => d.coord === neighbors[3]);
 }
 
 function drawRhombuses(selector, rhombhash, polygon, tl = null, ofs = null, scale = null) {
@@ -382,7 +399,7 @@ function drawRhombuses(selector, rhombhash, polygon, tl = null, ofs = null, scal
 	.attr('class', 'robinson')
 	.attr('d', rhomb => `M ${xform(rhomb.v1.x)}, ${yform(rhomb.v1.y)} L ${xform(rhomb.v2.x)}, ${yform(rhomb.v2.y)} L ${xform(rhomb.v3.x)}, ${yform(rhomb.v3.y)} L ${xform(rhomb.v4.x)}, ${yform(rhomb.v4.y)} Z`)
 	.style('fill', rhomb => rhomb.fillColor)
-	.on('mouseover', (_, d) => highlightNeighbors(selector, d.coord));
+	.on('mouseover', (_, d) => highlightRhombNeighbors(selector, rhombhash, d.coord));
     if(showIndex) {
 	d3.select(`${selector} g#rhombuses`)
 	    .selectAll('text.robinson').data(rhombuses)
@@ -391,7 +408,7 @@ function drawRhombuses(selector, rhombhash, polygon, tl = null, ofs = null, scal
 	    .attr('x', rhomb => xform((rhomb.v1.x + rhomb.v2.x + rhomb.v3.x + rhomb.v4.x) / 4))
 	    .attr('y', rhomb => yform((rhomb.v1.y + rhomb.v2.y + rhomb.v3.y + rhomb.v4.y) / 4))
 	    .text(rhomb => rhomb.coord)
-	    .on('mouseover', (_, d) => highlightNeighbors(selector, d.coord));
+	    .on('mouseover', (_, d) => highlightRhombNeighbors(selector, rhombhash, d.coord));
     }
     d3.select(`${selector} g#polygon`)
 	.selectAll('path.polygon').data([0])
