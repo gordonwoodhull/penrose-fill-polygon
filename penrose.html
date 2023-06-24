@@ -30,6 +30,14 @@
 		top: 1em;
 		right: 1em;
 	    }
+	    #github {
+		position:absolute;
+		top: 1em;
+		right: 20em;
+	    }
+	    #github img {
+		width: 4em;
+	    }
 	    svg {
 		width: 100%;
 		height: 50%;
@@ -131,6 +139,8 @@
                 </fieldset>
                 <input type="button" onclick="drawPenroseTiling();" value="Draw" />
             </div>
+	    <div id="github"><a href="https://github.com/gordonwoodhull/penrose-fill-polygon">
+		<img src="github-mark.png"></a></div>
 	    <div id="readout"></div>
             <svg id="gnomon">
 	      <g id="triangles"></g>
