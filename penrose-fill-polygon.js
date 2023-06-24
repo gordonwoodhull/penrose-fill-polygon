@@ -610,7 +610,7 @@ function drawPenroseTiling() {
 `<div>fills identified: ${find_tris.length}</div>
 <div>fills found: ${found_tris.length}</div>` :
 	     '') +
-`<div><div>calculation time:${dt}ms</div>`);
+`<div><div>calculation time: ${dt.toFixed(1)}ms</div>`);
     drawTriangles('svg#gnomon', triangles, discarded.concat(culledTris), polygon);
     // svg viewBox distorts things; we want to zoom in without making lines thicker
     // assume svg is wider than tall, and tiles are aspect ratio 1 
