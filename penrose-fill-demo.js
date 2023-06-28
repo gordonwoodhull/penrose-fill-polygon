@@ -108,7 +108,7 @@ function drawPenroseTiling() {
     const {
         center, r, polygon,
         robinsonTriangles, discardedTriangles, culledTriangles,
-        p3Rhombuses, culledRhombuses
+        p3Rhombuses, culledRhombuses, fillsIdentified, fillsFound
     } = calculatePenroseTiling(
         +minTiles, width, height, boundsShape, startile, resolve_ragged
     );
@@ -122,13 +122,13 @@ function drawPenroseTiling() {
 `<div>triangles culled: ${culledTriangles.length}</div>
 <div>rhombs culled: ${culledRhombuses.length}</div>` :
 	     resolve_ragged === 'fill' ?
-`<div>fills identified: ${find_tris.length}</div>
-<div>fills found: ${found_tris.length}</div>` :
+`<div>fills identified: ${fillsIdentified.length}</div>
+<div>fills found: ${fillsFound.length}</div>` :
 	     '') +
 `<div><div>calculation time: ${dt.toFixed(1)}ms</div>`);
     drawTriangles('svg#gnomon', robinsonTriangles, discardedTriangles.concat(culledTriangles), polygon);
     // svg viewBox distorts things; we want to zoom in without making lines thicker
-    // assume svg is wider than tall, and tiles are aspect ratio 1 
+    // assume svg is wider than tall, and tiles are aspect ratio 1
     const tl = new Vector(
 	d3.min(robinsonTriangles, tri => d3.min([tri.v1.x, tri.v2.x, tri.v3.x])),
 	d3.min(robinsonTriangles, tri => d3.min([tri.v1.y, tri.v2.y, tri.v3.y])));

@@ -411,6 +411,8 @@ function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile,
 	    [startri],
 	    tri => find_tris.some(find => find.indexOf(tri.coord) === find.length - tri.coord.length),
 	    tris => !tris.length || tris[0].coord.length === find_tris[0].length);
+        console.log(find_tris);
+        console.log(found_tris.map(({coord}) => coord));
 	for(const tri of found_tris)
 	    trihash[tri.coord] = tri;
 	triangles.push(...found_tris);
@@ -495,6 +497,8 @@ function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile,
         discardedTriangles: discarded,
         culledTriangles: culledTris,
         p3Rhombuses: rhombhash,
-        culledRhombuses: culledRhombs
+        culledRhombuses: culledRhombs,
+        fillsIdentified: find_tris,
+        fillsFound: found_tris
     };
 }
