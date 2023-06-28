@@ -337,7 +337,7 @@ function generateTriangles(triangles, filt, enough) {
 	    return false;
 	});
     }
-    while(!enough(triangles));
+    while(triangles.length && !enough(triangles));
     return [triangles, discarded];
 }
 
