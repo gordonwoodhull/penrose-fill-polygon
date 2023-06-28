@@ -1,13 +1,6 @@
 function highlightTriNeighbors(selector, coord) {
     const neighbors = d3.range(3).map(i => {
-	var nei;
-	try {
-	    nei = tatham_neighbor(coord, i)[0];
-        }
-	catch(xep) {
-	    console.warn('no neighbor for', coord);
-	}
-	return nei;
+	return tatham_neighbor_or_null(coord, i);
     });
     d3.selectAll(`${selector} g#triangles text.robinson`)
 	.classed('over', d => d.coord === coord)

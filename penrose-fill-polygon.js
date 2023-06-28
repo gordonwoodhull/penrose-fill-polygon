@@ -288,6 +288,16 @@ function tatham_neighbor(coord, side) {
     }
 }
 
+function tatham_neighbor_or_null(coord, side) {
+    try {
+        return tatham_neighbor(coord, side)[0];
+    }
+    catch(xep) {
+	console.warn('no neighbor', side, 'for', coord);
+        return null;
+    }
+}
+
 const shape_spec = {
     square: {
 	sides: 4,
@@ -388,26 +398,14 @@ function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile,
     const disind = [];
     const find_tris = [];
     for(var [i, t] of triangles.entries()) {
-	var oh = null;
-	try {
-	    oh = tatham_neighbor(t.coord, 0)[0];
-	}
-	catch(xep) {
-	    console.warn('no neighbor', 0, 'for', t.coord);
-	}
+	var oh = tatham_neighbor_or_null(t.coord, 0);
 	var t2;
 	if(!oh || !(t2 = trihash[oh])) {
 	    if(resolveRagged === "cull")
 		disind.push(i);
 	    else if(resolveRagged === "fill") {
-		var nei1 = null, nei2 = null, last;
-		try {
-		    nei1 = tatham_neighbor(t.coord, last = 1)[0];
-		    nei2 = tatham_neighbor(t.coord, last = 2)[0];
-		}
-		catch(xep) {
-		    console.warn('no neighbor', last, 'for', t.coord);
-		}
+		var nei1 = tatham_neighbor_or_null(t.coord, 1),
+		    nei2 = tatham_neighbor_or_null(t.coord, 2);
 		if(oh && nei1 && nei2 && trihash[nei1] && trihash[nei2])
 		    find_tris.push(oh);
 		else
@@ -430,13 +428,7 @@ function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile,
     const rhombhash = {};
     const tri2rhomb = {};
     for(var [i, t] of triangles.entries()) {
-	var oh = null;
-	try {
-	    oh = tatham_neighbor(t.coord, 0)[0];
-	}
-	catch(xep) {
-	    console.warn('no neighbor', 0, 'for', t.coord);
-	}
+	var oh = tatham_neighbor_or_null(t.coord, 0);
 	var t2;
 	if(oh && (t2 = trihash[oh])) {
 	    const rhombcoord = [t.coord, oh].sort().join(',');
@@ -467,13 +459,7 @@ function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile,
 	// X1, X2, Y1, Y2 or C1, C2, D1, D2
 	for(const tri of [tri1, tri2])
 	    for(const side of [1, 2]) {
-		var nei = null;
-		try {
-		    [nei,_] = tatham_neighbor(tri.coord, side);
-		}
-		catch(xep) {
-		    console.warn('no neighbor', side, 'for', tri.coord);
-		}
+		var nei = tatham_neighbor_or_null(tri.coord, side);
 		const rhombnei = nei && tri2rhomb[nei] || null;
 		neighbors.push(rhombnei);
 	    }
