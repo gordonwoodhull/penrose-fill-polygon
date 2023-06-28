@@ -419,8 +419,11 @@ function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile,
 	    [startri],
 	    tri => find_tris.some(find => find.indexOf(tri.coord) === find.length - tri.coord.length),
 	    tris => !tris.length || tris[0].coord.length === find_tris[0].length);
-        console.log(find_tris);
-        console.log(found_tris.map(({coord}) => coord));
+        if(found_tris.length < find_tris.length) {
+            console.log('did not find other halves of all sought triangles:');
+            console.log('sought', find_tris);
+            console.log('found', found_tris.map(({coord}) => coord));
+        }
 	for(const tri of found_tris)
 	    trihash[tri.coord] = tri;
 	triangles.push(...found_tris);
