@@ -93,25 +93,49 @@ function drawRhombuses(selector, rhombhash, polygon, tl = null, ofs = null, scal
 	.attr('d', _ => `M ${polygon[0].print(xform, yform)} ` + polygon.slice(1).map(v => v.print(xform, yform)).join(' ') + ' Z');
 }
 
+function fixPolygon(center, r) {
+    urlParams.set('center', center.print());
+    urlParams.set('r', r.toFixed(4));
+    window.location.search = urlParams;
+}
+
+function unfixPolygon() {
+    urlParams.delete('center');
+    urlParams.delete('r');
+    window.location.search = urlParams;
+}
+
 function drawPenroseTiling() {
     var minTiles = document.getElementById("minimum").value;
     var boundsShape = document.querySelector('input[name="init_shape"]:checked').value;
     var resolve_ragged = document.querySelector('input[name="resolve_ragged"]:checked').value;
     const width = +d3.select('svg#gnomon').nodes()[0].clientWidth,
 	  height =  +d3.select('svg#gnomon').nodes()[0].clientHeight;
+    let fixedCenter = null, fixedR = null;
+    if(urlCenter) {
+        fixedCenter = urlCenter.split(',').map(x => +x);
+        if(fixedCenter.length != 2 || isNaN(fixedCenter[0]) || isNaN(fixedCenter[1]))
+            fixedCenter = null;
+        else fixedCenter = new Vector(...fixedCenter);
+    }
+    if(urlR)
+        fixedR = +urlR || null;
     const startt = performance.now();
     const {
         center, r, polygon,
         robinsonTriangles, discardedTriangles, culledTriangles,
         p3Rhombuses, culledRhombuses, fillsIdentified, fillsFound
     } = calculatePenroseTiling(
-        +minTiles, width, height, boundsShape, startile, resolve_ragged
+        +minTiles, width, height, boundsShape, startile, resolve_ragged, fixedCenter, fixedR
     );
     const dt = performance.now() - startt;
 
+    const fixLink = (!fixedCenter && !fixedR) ?
+          '<a id="fix-polygon" href="#">fix</a></div>' :
+          '<a id="unfix-polygon" href="#">unfix</a></div>';
     d3.select('#readout').html(
 `<div>center: ${center.print()}</div>
-<div>r: ${r.toFixed(4)}</div>
+<div>r: ${r.toFixed(4)} ${fixLink}
 <div>triangles found: ${robinsonTriangles.length}</div>` +
 	    (resolve_ragged === 'cull' ?
 `<div>triangles culled: ${culledTriangles.length}</div>
@@ -120,7 +144,11 @@ function drawPenroseTiling() {
 `<div>fills identified: ${fillsIdentified.length}</div>
 <div>fills found: ${fillsFound.length}</div>` :
 	     '') +
-`<div><div>calculation time: ${dt.toFixed(1)}ms</div>`);
+            `<div><div>calculation time: ${dt.toFixed(1)}ms</div>`);
+    window.setTimeout(() => {
+        d3.select('#fix-polygon').on('click', () => fixPolygon(center, r));
+        d3.select('#unfix-polygon').on('click', () => unfixPolygon());
+    }, 250);
     drawTriangles('svg#gnomon', robinsonTriangles, discardedTriangles.concat(culledTriangles), polygon);
     // svg viewBox distorts things; we want to zoom in without making lines thicker
     // assume svg is wider than tall, and tiles are aspect ratio 1
@@ -148,6 +176,8 @@ const ragged = urlParams.get('ragged');
 const startile = urlParams.get('tile') || 'X';
 const showIndex = urlParams.get('coord') !== null;
 const drawlevel = urlParams.get('draw') || 'rhombus';
+const urlCenter = urlParams.get('center') || null;
+const urlR = urlParams.get('r') || null;
 
 if(depth !== null) {
     d3.select('#minimum').property('value', depth);

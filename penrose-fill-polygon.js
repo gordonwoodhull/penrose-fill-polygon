@@ -352,7 +352,7 @@ function lighten(color) {
     return color;
 }
 
-function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile, resolveRagged) {
+function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile, resolveRagged, center, r) {
     var ratio = Math.sin(36 * (Math.PI / 180)) / Math.sin(54 * (Math.PI / 180));
     var startri = null;
     switch(startTile) {
@@ -369,20 +369,22 @@ function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile,
 	startri = new TriangleY(new Vector(width / 2.0, 0), new Vector(width, width / 2.0 * ratio), new Vector(0, width / 2.0 * ratio), startTile);
 	break;
     }
-    var triangles = [startri];
-    let center,
-	r = d3.randomUniform(width/1000, width/8)(),
-	xrand = d3.randomUniform(r, width-r),
-	yrand = d3.randomUniform(r, width / 2.0 * ratio - r),
-	polygon, tinytris;
-    do {
-	center = new Vector(xrand(), yrand());
-	polygon = regularPolygon(center, r, boundsShape);
-	// this is dumb; we want point in polygon but we have the hammer of triangle intersection
-	// it's not like we need to speed this up
-	tinytris = polygon.map(p => new Triangle(p, new Vector(p.x + 0.0001, p.y + 0.0001), new Vector(p.x - 0.0002, p.y)));
-    } while(!tinytris.every(tri => trianglesIntersect(tri, startri)));
-
+    var triangles = [startri], polygon;
+    if(center && r)
+        polygon = regularPolygon(center, r, boundsShape);
+    else {
+	r = d3.randomUniform(width/1000, width/8)();
+	let xrand = d3.randomUniform(r, width-r),
+	    yrand = d3.randomUniform(r, width / 2.0 * ratio - r),
+	    tinytris;
+        do {
+	    center = new Vector(xrand(), yrand());
+	    polygon = regularPolygon(center, r, boundsShape);
+	    // this is dumb; we want point in polygon but we have the hammer of triangle intersection
+	    // it's not like we need to speed this up
+	    tinytris = polygon.map(p => new Triangle(p, new Vector(p.x + 0.0001, p.y + 0.0001), new Vector(p.x - 0.0002, p.y)));
+        } while(!tinytris.every(tri => trianglesIntersect(tri, startri)));
+    }
     const polyTris = triangulate(polygon);
 
     console.assert(!isNaN(minTiles));
