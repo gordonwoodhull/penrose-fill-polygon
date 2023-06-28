@@ -408,7 +408,7 @@ function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile,
 		catch(xep) {
 		    console.warn('no neighbor', last, 'for', t.coord);
 		}
-		if(oh && nei1 && nei2)
+		if(oh && nei1 && nei2 && trihash[nei1] && trihash[nei2])
 		    find_tris.push(oh);
 		else
 		    disind.push(i);
