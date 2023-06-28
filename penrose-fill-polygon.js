@@ -330,6 +330,18 @@ function generateTriangles(triangles, filt, enough) {
     while(!enough(triangles));
     return [triangles, discarded];
 }
+
+function lighten(color) {
+    switch(color) {
+    case 'blue':
+        return 'lightblue';
+    case 'red':
+        return 'pink';
+    }
+    console.log('unknown color to lighten', color);
+    return color;
+}
+
 function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile, resolveRagged) {
     var ratio = Math.sin(36 * (Math.PI / 180)) / Math.sin(54 * (Math.PI / 180));
     var startri = null;
@@ -348,7 +360,6 @@ function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile,
 	break;
     }
     var triangles = [startri];
-    console.log(startri);
     let center,
 	r = d3.randomUniform(width/1000, width/8)(),
 	xrand = d3.randomUniform(r, width-r),
@@ -406,7 +417,6 @@ function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile,
     }
     var found_tris = [];
     if(find_tris.length) {
-	console.log(startri);
 	[found_tris] = generateTriangles(
 	    [startri],
 	    tri => find_tris.some(find => find.indexOf(tri.coord) === find.length - tri.coord.length),
@@ -435,7 +445,9 @@ function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile,
 	    else {
 		tri2rhomb[t.coord] = rhombcoord;
 		tri2rhomb[oh] = rhombcoord;
-		const rhombus = new Rhombus(t.v1, t.v2, t2.v1, t2.v2, rhombcoord, t.fillColor);
+                const fillColor = (find_tris.includes(t.coord) || find_tris.includes(oh)) ?
+                      lighten(t.fillColor) : t.fillColor;
+		const rhombus = new Rhombus(t.v1, t.v2, t2.v1, t2.v2, rhombcoord, fillColor);
 		rhombhash[rhombcoord] = {
 		    rhombus,
 		    tri1: t,
