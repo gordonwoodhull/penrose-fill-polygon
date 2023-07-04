@@ -15,11 +15,12 @@ Then we recursively split any triangles which intersect the polygon using [Robin
 We also use Tatham's [combinatorial coordinates](https://www.chiark.greenend.org.uk/~sgtatham/quasiblog/aperiodic-tilings/#ccoords) to deduce which triangles are neighbors. From there, we know which triangles to combine into rhombuses, and which rhombuses are neighbors.
 
 Finally, we need to coalesce matching triangles into rhombuses, and clean up the border to avoid ragged edges (characterized by gaps and tiles connected by one or less sides). This part of the library is a work in progress. Currently there are two algorithms:
-* "Cull", which removes any half-rhombs and repeatedly removes any rhombus which only has one neighbor.
-* "Fill", which instead generates the other half of rhombuses when the first half has two neighbors.
+* `cull` removes any half-rhombs and then repeatedly removes any rhombus which only has one neighbor.
+* `fill` generates the other half of rhombuses when the first half has two neighbors (and we may want to fill whole rhombuses after)
+Perhaps the ideal algorithm would minimize the border length / tile count ratio using such primitives.
 
 If you are interested in contributing to this library, help is welcome:
-* Breaking up the monolithic function into a more modular approach, especially if you have a use case that demands more flexibility.
+* Breaking up the monolithic `calculatePenroseTiling` function into modular steps - especially if you have a use case to motivate more flexibility.
 * Improving and debugging the ragged border resolution algorithms.
 
 Thanks to Andrei Paleyes for the original [penrose-tiling](https://github.com/apaleyes/penrose-tiling), which provides the Robinson triangle-splitting algorithm.
