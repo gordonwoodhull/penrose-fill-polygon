@@ -173,7 +173,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const depth = urlParams.get('depth');
 const shape = urlParams.get('shape');
 const ragged = urlParams.get('ragged');
-const startile = urlParams.get('tile') || 'X';
+const startile = urlParams.get('tile')?.toUpperCase() || 'X';
 const showIndex = urlParams.get('coord') !== null;
 const drawlevel = urlParams.get('draw') || 'rhombus';
 const urlCenter = urlParams.get('center') || null;
