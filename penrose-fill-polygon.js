@@ -392,13 +392,23 @@ function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile,
         polygon = regularPolygon(center, r, boundsShape);
     else {
 	r = d3.randomUniform(width/1000, width/8)();
-	let xrand = d3.randomUniform(r, width-r),
-	    yrand = d3.randomUniform(r, width / 2.0 * ratio - r),
-	    tinytris;
+        let r_tries = 5, found = false;
         do {
-	    center = new Vector(xrand(), yrand());
-	    polygon = regularPolygon(center, r, boundsShape);
-        } while(!polygon.every(pt => startri.pointInside(pt)));
+	    let xrand = d3.randomUniform(r, width-r),
+	        yrand = d3.randomUniform(r, width / 2.0 * ratio - r);
+            let c_tries = 100;
+            do {
+	        center = new Vector(xrand(), yrand());
+	        polygon = regularPolygon(center, r, boundsShape);
+                found = polygon.every(pt => startri.pointInside(pt));
+            } while(--c_tries && !found);
+            r /= 2;
+        }
+        while(--r_tries && !found)
+        if(!r_tries) {
+            console.log("couldn't find polygon of radius", r, "inside", startri.v1.print(), startri.v2.print(), startri.v3.print());
+            throw new Error("Couldn't find polygon inside triangle");
+        }
     }
     const polyTris = triangulate(polygon);
 
