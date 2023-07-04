@@ -71,6 +71,13 @@ class Vector {
     }
 }
 
+// adapted from
+// https://stackoverflow.com/questions/2049582/how-to-determine-if-a-point-is-in-a-2d-triangle/2049593#2049593
+
+function sign(v1, v2, v3) {
+    return (v1.x - v3.x) * (v2.y - v3.y) - (v2.x - v3.x) * (v1.y - v3.y);
+}
+
 class Triangle {
     constructor(v1, v2, v3, coord, fillColor) {
         this.v1 = v1;
@@ -79,6 +86,17 @@ class Triangle {
 
         this.fillColor = fillColor;
 	this.coord = coord;
+    }
+
+    pointInside(pt) {
+        const d1 = sign(pt, this.v1, this.v2),
+              d2 = sign(pt, this.v2, this.v3),
+              d3 = sign(pt, this.v3, this.v1);
+
+        const has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+        const has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+
+        return !(has_neg && has_pos);
     }
 }
 
@@ -380,10 +398,7 @@ function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile,
         do {
 	    center = new Vector(xrand(), yrand());
 	    polygon = regularPolygon(center, r, boundsShape);
-	    // this is dumb; we want point in polygon but we have the hammer of triangle intersection
-	    // it's not like we need to speed this up
-	    tinytris = polygon.map(p => new Triangle(p, new Vector(p.x + 0.0001, p.y + 0.0001), new Vector(p.x - 0.0002, p.y)));
-        } while(!tinytris.every(tri => trianglesIntersect(tri, startri)));
+        } while(!polygon.every(pt => startri.pointInside(pt)));
     }
     const polyTris = triangulate(polygon);
 
