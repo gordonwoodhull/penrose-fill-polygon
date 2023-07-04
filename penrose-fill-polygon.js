@@ -391,12 +391,14 @@ function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile,
     if(center && r)
         polygon = regularPolygon(center, r, boundsShape);
     else {
+        const [xmin, xmax] = d3.extent([startri.v1.x, startri.v2.x, startri.v3.x]);
+        const [ymin, ymax] = d3.extent([startri.v1.y, startri.v2.y, startri.v3.y]);
 	r = d3.randomUniform(width/1000, width/8)();
         let r_tries = 5, found = false;
         do {
-	    let xrand = d3.randomUniform(r, width-r),
-	        yrand = d3.randomUniform(r, width / 2.0 * ratio - r);
-            let c_tries = 100;
+	    let xrand = d3.randomUniform(xmin + r, xmax - r),
+	        yrand = d3.randomUniform(ymin + r, ymax - r);
+            let c_tries = 10;
             do {
 	        center = new Vector(xrand(), yrand());
 	        polygon = regularPolygon(center, r, boundsShape);
