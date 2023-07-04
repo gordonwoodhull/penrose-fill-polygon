@@ -188,10 +188,6 @@ const allowedShapes = d3.selectAll('input[name="init_shape"]').nodes().map(elem 
 if(shape !== null && allowedShapes.includes(shape))
     d3.selectAll('input[name="init_shape"]').property('checked', function() { return this.value === shape; });
 const allowedRagged = d3.selectAll('input[name="resolve_ragged"]').nodes().map(elem => elem.value);
-if(ragged !== null && allowedRagged.includes(ragged)) {
-    if(ragged === 'fill') {
-	d3.select('#ragged-fill').style('display', null);
-	d3.select('label[for=ragged-fill]').style('display', null);
-    }
+if(ragged !== null && allowedRagged.includes(ragged))
     d3.selectAll('input[name="resolve_ragged"]').property('checked', function() { return this.value === ragged; });
-}
+
