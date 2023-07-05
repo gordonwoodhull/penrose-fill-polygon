@@ -372,7 +372,7 @@ function lighten(color) {
 
 function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile, resolveRagged, center, r) {
     var ratio = Math.sin(36 * (Math.PI / 180)) / Math.sin(54 * (Math.PI / 180));
-    var startri = null;
+    var startri = null, hei;
     switch(startTile) {
     case 'C':
 	startri = new TriangleC(new Vector(width / 2 - height / 2 / ratio, height / 2), new Vector(width / 2 + height / 2 / ratio, 0), new Vector(width / 2 + height / 2 / ratio, height), startTile);
@@ -381,10 +381,12 @@ function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile,
 	startri = new TriangleD(new Vector(width / 2 - height / 2 / ratio, height / 2), new Vector(width / 2 + height / 2 / ratio, 0), new Vector(width / 2 + height / 2 / ratio, height), startTile);
 	break;
     case 'X':
-	startri = new TriangleX(new Vector(width / 2.0, 0), new Vector(width, width / 2.0 * ratio), new Vector(0, width / 2.0 * ratio), startTile);
+        hei = Math.min(width / 2.0 * ratio, height);
+	startri = new TriangleX(new Vector(width / 2.0, 0), new Vector(width / 2.0 + hei / ratio, hei), new Vector(width / 2.0 - hei / ratio, hei), startTile);
 	break;
     case 'Y':
-	startri = new TriangleY(new Vector(width / 2.0, 0), new Vector(width, width / 2.0 * ratio), new Vector(0, width / 2.0 * ratio), startTile);
+        hei = Math.min(width / 2.0 * ratio, height);
+	startri = new TriangleY(new Vector(width / 2.0, 0), new Vector(width / 2.0 + hei / ratio, hei), new Vector(width / 2.0 - hei / ratio, hei), startTile);
 	break;
     }
     var triangles = [startri], polygon;
