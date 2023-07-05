@@ -4,9 +4,9 @@ A library to generate P3 tiles inside a polygon, based on [apaleyes/penrose-tili
 
 [Demo here](https://gordonwoodhull.github.io/penrose-fill-polygon/penrose.html)
 
-This library fills an approximate number of random rhombus Penrose tiles in a polygon, and calculates the neighbors of those rhombuses.
+This library fills an approximate number of random rhombus [Penrose P3 tiles](https://en.wikipedia.org/wiki/Penrose_tiling#Rhombus_tiling_(P3)) tiles in a polygon, and calculates the neighbors of those rhombuses.
 
-It uses an algorithm described by Simon Tatham in ["Choosing a random patch from a fixed expansion"](https://www.chiark.greenend.org.uk/~sgtatham/quasiblog/aperiodic-tilings/#random-patch). (This works perfectly for a [Penrose P3 tiling](https://en.wikipedia.org/wiki/Penrose_tiling#Rhombus_tiling_(P3)), so we don't need the more advanced technique he describes later.)
+It uses an algorithm described by Simon Tatham in ["Choosing a random patch from a fixed expansion"](https://www.chiark.greenend.org.uk/~sgtatham/quasiblog/aperiodic-tilings/#random-patch). (This works perfectly for a P3 tiling, so we don't need the more advanced technique he describes later.)
 
 We put the polygon in a random place and scale inside a starting Robinson triangle. By default, a [golden gnomon](https://en.wikipedia.org/wiki/Golden_triangle_(mathematics)) is used. This is an isosceles triangles with an inverse [golden ratio](https://en.wikipedia.org/wiki/Golden_ratio) between the length of the equal sides and the length of the base.
 
