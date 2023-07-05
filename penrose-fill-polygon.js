@@ -375,10 +375,12 @@ function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile,
     var startri = null, hei;
     switch(startTile) {
     case 'C':
-	startri = new TriangleC(new Vector(width / 2 - height / 2 / ratio, height / 2), new Vector(width / 2 + height / 2 / ratio, 0), new Vector(width / 2 + height / 2 / ratio, height), startTile);
+        hei = Math.min(width * ratio, height);
+	startri = new TriangleC(new Vector(width / 2 - hei / 2 / ratio, hei / 2), new Vector(width / 2 + hei / 2 / ratio, 0), new Vector(width / 2 + hei / 2 / ratio, hei), startTile);
 	break;
     case 'D':
-	startri = new TriangleD(new Vector(width / 2 - height / 2 / ratio, height / 2), new Vector(width / 2 + height / 2 / ratio, 0), new Vector(width / 2 + height / 2 / ratio, height), startTile);
+        hei = Math.min(width * ratio, height);
+	startri = new TriangleD(new Vector(width / 2 - hei / 2 / ratio, hei / 2), new Vector(width / 2 + hei / 2 / ratio, 0), new Vector(width / 2 + hei / 2 / ratio, hei), startTile);
 	break;
     case 'X':
         hei = Math.min(width / 2.0 * ratio, height);
