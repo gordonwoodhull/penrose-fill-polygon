@@ -55,10 +55,9 @@ class Vector {
         return new Vector(end.x - start.x, end.y - start.y);
     }
 
-    print(xform, yform) {
+    print(xform, yform, prec = 4) {
 	xform = xform || (x => x);
 	yform = yform || (y => y);
-	const prec = 4;
 	return `${xform(this.x).toFixed(prec)}, ${yform(this.y).toFixed(prec)}`;
     }
 

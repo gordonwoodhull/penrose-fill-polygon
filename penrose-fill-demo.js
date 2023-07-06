@@ -167,6 +167,34 @@ function drawPenroseTiling() {
 	drawTriangles('svg#tiles', robinsonTriangles, culledTriangles, polygon, tl, ofs, scale);
     else if(drawlevel === 'rhombus')
 	drawRhombuses('svg#tiles', p3Rhombuses, polygon, tl, ofs, scale);
+    const rray = [];
+    for(const {rhombus: rh} of Object.values(p3Rhombuses)) {
+        const cx = (rh.v1.x + rh.v3.x) / 2,
+              cy = (rh.v1.y + rh.v3.y) / 2,
+              cx2 = (rh.v2.x + rh.v4.x) / 2,
+              cy2 = (rh.v2.y + rh.v4.y) / 2;
+        console.assert(Math.abs(cx - cx2) < 1);
+        console.assert(Math.abs(cy - cy2) < 1);
+        var vs = [
+            new Vector(rh.v1.x - cx, rh.v1.y - cy),
+            new Vector(rh.v2.x - cx, rh.v2.y - cy),
+            new Vector(rh.v3.x - cx, rh.v3.y - cy),
+            new Vector(rh.v4.x - cx, rh.v4.y - cy)];
+        var minth = 1000, mini = -1;
+        for(var i = 0; i < 4; ++i) {
+            const th = Math.atan2(vs[i].y, vs[i].x);
+            if(th < minth) {
+                minth = th;
+                mini = i;
+            }
+        }
+        vs = [...vs.slice(mini), ...vs.slice(0, mini)];
+        rray.push(new Rhombus(...vs, rh.coord));
+    }
+    const types = {};
+    for(const rh of rray)
+        types[`${rh.v1.print(0,0,2)}, ${rh.v2.print(0,0,2)}, ${rh.v3.print(0,0,2)}, ${rh.v4.print(0,0,2)}`] = true;
+    console.log(Object.keys(types));
 }
 
 const urlParams = new URLSearchParams(window.location.search);
