@@ -143,17 +143,21 @@ function drawPenroseTiling() {
             new Vector(rh.v2.x - cx, rh.v2.y - cy),
             new Vector(rh.v3.x - cx, rh.v3.y - cy),
             new Vector(rh.v4.x - cx, rh.v4.y - cy)];
-        var minth = 1000, mini = -1;
-        for(var i = 0; i < 4; ++i) {
-            const th = Math.atan2(vs[i].y, vs[i].x);
-            if(th < minth) {
-                minth = th;
-                mini = i;
-            }
-        }
-	if(mini%2)
-	    console.log("no! rotation should be only 0 or 2", mini);
-        vs = [...vs.slice(mini), ...vs.slice(0, mini)];
+
+	// rotate if corner 2, or typographically corner 3 is closer to 0 radians
+	var do_it = false;
+	const at2 = Math.abs(Math.atan2(vs[2].y, vs[2].x)),
+	      at0 = Math.abs(Math.atan2(vs[0].y, vs[0].x));
+	if(Math.abs(at2 - at0) < 0.00001) { // or Math.abs(at0 - Math.PI / 2) < 0.00001
+	    const at3 = Math.abs(Math.atan2(vs[3].y, vs[3].x)),
+		  at1 = Math.abs(Math.atan2(vs[1].y, vs[1].x));
+	    if(at3 < at1)
+		do_it = true;
+	}
+	else if(at2 < at0)
+	    do_it = true;
+	if(do_it)
+	    vs = [...vs.slice(2), ...vs.slice(0, 2)];
         rray.push(new Rhombus(...vs, rh.coord));
     }
     
