@@ -75,14 +75,14 @@ function drawRhombuses(selector, rhombhash, polygon, tl = null, ofs = null, scal
 	.style('fill', rhomb => rhomb.fillColor)
 	.on('mouseover', (_, d) => highlightRhombNeighbors(selector, rhombhash, d.coord))
         .on('mouseout', () => highlightRhombNeighbors(selector, rhombhash, null));
-    if(showIndex) {
+    if(showIndex || showBaseRhombuses) {
 	d3.select(`${selector} g#rhombuses`)
 	    .selectAll('text.robinson').data(rhombuses)
 	    .join('text')
 	    .attr('class', 'robinson')
 	    .attr('x', rhomb => xform((rhomb.v1.x + rhomb.v2.x + rhomb.v3.x + rhomb.v4.x) / 4))
 	    .attr('y', rhomb => yform((rhomb.v1.y + rhomb.v2.y + rhomb.v3.y + rhomb.v4.y) / 4))
-	    .text(rhomb => rhomb.coord)
+	    .text(rhomb => showIndex ? rhomb.coord : rhombhash[rhomb.coord].base)
 	    .on('mouseover', (_, d) => highlightRhombNeighbors(selector, rhombhash, d.coord))
             .on('mouseout', () => highlightRhombNeighbors(selector, rhombhash, null));
     }
@@ -129,44 +129,6 @@ function drawPenroseTiling() {
         +minTiles, width, height, boundsShape, startile, resolve_ragged, fixedCenter, fixedR
     );
     const dt = performance.now() - startt;
-
-    const fixLink = (!fixedCenter && !fixedR) ?
-          '<a id="fix-polygon" href="#">fix</a></div>' :
-          '<a id="unfix-polygon" href="#">unfix</a></div>';
-    d3.select('#readout').html(
-`<div>center: ${center.print()}</div>
-<div>r: ${r.toFixed(4)} ${fixLink}
-<div>triangles found: ${robinsonTriangles.length}</div>` +
-	    (resolve_ragged === 'cull' ?
-`<div>triangles culled: ${culledTriangles.length}</div>
-<div>rhombs culled: ${culledRhombuses.length}</div>` :
-	     resolve_ragged === 'fill' ?
-`<div>fills identified: ${fillsIdentified.length}</div>
-<div>fills found: ${fillsFound.length}</div>` :
-	     '') +
-            `<div><div>calculation time: ${dt.toFixed(1)}ms</div>`);
-    window.setTimeout(() => {
-        d3.select('#fix-polygon').on('click', () => fixPolygon(center, r));
-        d3.select('#unfix-polygon').on('click', () => unfixPolygon());
-    }, 250);
-    drawTriangles('svg#gnomon', robinsonTriangles, discardedTriangles.concat(culledTriangles), polygon);
-    // svg viewBox distorts things; we want to zoom in without making lines thicker
-    // assume svg is wider than tall, and tiles are aspect ratio 1
-    const tl = new Vector(
-	d3.min(robinsonTriangles, tri => d3.min([tri.v1.x, tri.v2.x, tri.v3.x])),
-	d3.min(robinsonTriangles, tri => d3.min([tri.v1.y, tri.v2.y, tri.v3.y])));
-    const br = new Vector(
-	d3.max(robinsonTriangles, tri => d3.max([tri.v1.x, tri.v2.x, tri.v3.x])),
-	d3.max(robinsonTriangles, tri => d3.max([tri.v1.y, tri.v2.y, tri.v3.y])));
-    const twidth = +d3.select('svg#tiles').nodes()[0].clientWidth,
-	  theight =  +d3.select('svg#tiles').nodes()[0].clientHeight;
-    const rwidth = br.x - tl.x, rheight = br.y - tl.y;
-    const ofs = new Vector((twidth - theight)/2, 0);
-    const scale = new Vector(theight/rheight, theight/rheight);
-    if(drawlevel === 'triangle')
-	drawTriangles('svg#tiles', robinsonTriangles, culledTriangles, polygon, tl, ofs, scale);
-    else if(drawlevel === 'rhombus')
-	drawRhombuses('svg#tiles', p3Rhombuses, polygon, tl, ofs, scale);
     const rray = [];
     for(const {rhombus: rh} of Object.values(p3Rhombuses)) {
         const cx = (rh.v1.x + rh.v3.x) / 2,
@@ -195,10 +157,55 @@ function drawPenroseTiling() {
     const prec = 2;
     const rset = new Set();
     const trunc = x => Math.abs(x) < 10 ** -prec ? 0..toFixed(prec) : x.toFixed(prec);
-    const buckets = d3.flatRollup(rray, v => v.map(r => r.coord), r => trunc(r.v1.x), r => trunc(r.v1.y), r => trunc(r.v2.x), r => trunc(r.v2.y), r => trunc(r.v3.x), r => trunc(r.v3.y), r => trunc(r.v4.x), r => trunc(r.v4.y));
-    console.log(buckets.length, 'base rhombuses')
-    for(const e of buckets)
+    const bases = d3.flatRollup(rray, v => v, r => trunc(r.v1.x), r => trunc(r.v1.y), r => trunc(r.v2.x), r => trunc(r.v2.y), r => trunc(r.v3.x), r => trunc(r.v3.y), r => trunc(r.v4.x), r => trunc(r.v4.y));
+    console.log(bases.length, 'base rhombuses')
+    for(const [i, e] of bases.entries()) {
+	e[8].forEach(rh => {
+	    p3Rhombuses[rh.coord].base = i;
+	});
+	
 	console.log(String(e[8].length).padStart(3,' ') + ': ' + e.slice(0,8).map(c => c.padStart(7,' ')).join(' '));
+    }
+
+    const fixLink = (!fixedCenter && !fixedR) ?
+          '<a id="fix-polygon" href="#">fix</a></div>' :
+          '<a id="unfix-polygon" href="#">unfix</a></div>';
+    d3.select('#readout').html(
+`<div>center: ${center.print()}</div>
+<div>r: ${r.toFixed(4)} ${fixLink}
+<div>triangles found: ${robinsonTriangles.length}</div>` +
+	    (resolve_ragged === 'cull' ?
+`<div>triangles culled: ${culledTriangles.length}</div>
+<div>rhombs culled: ${culledRhombuses.length}</div>` :
+	     resolve_ragged === 'fill' ?
+`<div>fills identified: ${fillsIdentified.length}</div>
+<div>fills found: ${fillsFound.length}</div>` :
+	     '') +
+	    (showBaseRhombuses ?
+	     `<div>rhombus bases: ${bases.length}` : '') +
+	    `<div>calculation time: ${dt.toFixed(1)}ms</div>`);
+    window.setTimeout(() => {
+        d3.select('#fix-polygon').on('click', () => fixPolygon(center, r));
+        d3.select('#unfix-polygon').on('click', () => unfixPolygon());
+    }, 250);
+    drawTriangles('svg#gnomon', robinsonTriangles, discardedTriangles.concat(culledTriangles), polygon);
+    // svg viewBox distorts things; we want to zoom in without making lines thicker
+    // assume svg is wider than tall, and tiles are aspect ratio 1
+    const tl = new Vector(
+	d3.min(robinsonTriangles, tri => d3.min([tri.v1.x, tri.v2.x, tri.v3.x])),
+	d3.min(robinsonTriangles, tri => d3.min([tri.v1.y, tri.v2.y, tri.v3.y])));
+    const br = new Vector(
+	d3.max(robinsonTriangles, tri => d3.max([tri.v1.x, tri.v2.x, tri.v3.x])),
+	d3.max(robinsonTriangles, tri => d3.max([tri.v1.y, tri.v2.y, tri.v3.y])));
+    const twidth = +d3.select('svg#tiles').nodes()[0].clientWidth,
+	  theight =  +d3.select('svg#tiles').nodes()[0].clientHeight;
+    const rwidth = br.x - tl.x, rheight = br.y - tl.y;
+    const ofs = new Vector((twidth - theight)/2, 0);
+    const scale = new Vector(theight/rheight, theight/rheight);
+    if(drawlevel === 'triangle')
+	drawTriangles('svg#tiles', robinsonTriangles, culledTriangles, polygon, tl, ofs, scale);
+    else if(drawlevel === 'rhombus')
+	drawRhombuses('svg#tiles', p3Rhombuses, polygon, tl, ofs, scale);
 }
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -207,6 +214,7 @@ const shape = urlParams.get('shape');
 const ragged = urlParams.get('ragged');
 const startile = urlParams.get('tile')?.toUpperCase() || 'X';
 const showIndex = urlParams.get('coord') !== null;
+const showBaseRhombuses = urlParams.get('base') !== null; // not a good name
 const drawlevel = urlParams.get('draw') || 'rhombus';
 const urlCenter = urlParams.get('center') || null;
 const urlR = urlParams.get('r') || null;
