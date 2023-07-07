@@ -67,12 +67,13 @@ function drawRhombuses(selector, rhombhash, polygon, tl = null, ofs = null, scal
     const xform = x => (x - tl.x) * scale.x + ofs.x;
     const yform = y => (y - tl.y) * scale.y + ofs.y;
     const rhombuses = Object.values(rhombhash).map(({rhombus}) => rhombus);
+    const categorical_colors = d3.schemeSet3.concat(d3.schemeTableau10);
     d3.select(`${selector} g#rhombuses`)
 	.selectAll('path.robinson').data(rhombuses)
 	.join('path')
 	.attr('class', 'robinson')
 	.attr('d', rhomb => `M ${xform(rhomb.v1.x)}, ${yform(rhomb.v1.y)} L ${xform(rhomb.v2.x)}, ${yform(rhomb.v2.y)} L ${xform(rhomb.v3.x)}, ${yform(rhomb.v3.y)} L ${xform(rhomb.v4.x)}, ${yform(rhomb.v4.y)} Z`)
-	.style('fill', rhomb => rhomb.fillColor)
+	.style('fill', rhomb => showBaseRhombuses ? categorical_colors[rhombhash[rhomb.coord].base] : rhomb.fillColor)
 	.on('mouseover', (_, d) => highlightRhombNeighbors(selector, rhombhash, d.coord))
         .on('mouseout', () => highlightRhombNeighbors(selector, rhombhash, null));
     if(showIndex || showBaseRhombuses) {
@@ -164,7 +165,7 @@ function drawPenroseTiling() {
 	    p3Rhombuses[rh.coord].base = i;
 	});
 	
-	console.log(String(e[8].length).padStart(3,' ') + ': ' + e.slice(0,8).map(c => c.padStart(7,' ')).join(' '));
+	console.log(String(i).padStart(2,' ') + ' ' + ('(' + e[8].length + ')').padStart(4,' ') + ': ' + e.slice(0,8).map(c => c.padStart(7,' ')).join(' '));
     }
 
     const fixLink = (!fixedCenter && !fixedR) ?
