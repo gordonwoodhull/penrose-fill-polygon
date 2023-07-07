@@ -151,6 +151,8 @@ function drawPenroseTiling() {
                 mini = i;
             }
         }
+	if(mini%2)
+	    console.log("no! rotation should be only 0 or 2", mini);
         vs = [...vs.slice(mini), ...vs.slice(0, mini)];
         rray.push(new Rhombus(...vs, rh.coord));
     }
