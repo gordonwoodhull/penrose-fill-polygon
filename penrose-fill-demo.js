@@ -198,7 +198,7 @@ function drawPenroseTiling() {
 }
 
 const urlParams = new URLSearchParams(window.location.search);
-const depth = urlParams.get('depth');
+const mint = urlParams.get('min');
 const shape = urlParams.get('shape');
 const ragged = urlParams.get('ragged');
 const startile = urlParams.get('tile')?.toUpperCase() || 'X';
@@ -207,9 +207,9 @@ const drawlevel = urlParams.get('draw') || 'rhombus';
 const urlCenter = urlParams.get('center') || null;
 const urlR = urlParams.get('r') || null;
 
-if(depth !== null) {
-    d3.select('#minimum').property('value', depth);
-    d3.select('#minimumOutput').text(depth);
+if(mint !== null) {
+    d3.select('#minimum').property('value', mint);
+    d3.select('#minimumOutput').text(mint);
 }
 
 const allowedShapes = d3.selectAll('input[name="init_shape"]').nodes().map(elem => elem.value);
