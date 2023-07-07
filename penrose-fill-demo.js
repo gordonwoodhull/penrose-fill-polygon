@@ -194,17 +194,11 @@ function drawPenroseTiling() {
     
     const prec = 2;
     const rset = new Set();
-    const trunc = x => Math.abs(x) < 10 ** -prec ? "0" : x.toFixed(prec);
-    const buckets = d3.group(rray, r => trunc(r.v1.x), r => trunc(r.v1.y), r => trunc(r.v2.x), r => trunc(r.v2.y));
-    const entries = [];
-    for(const [x1, x1m] of buckets.entries())
-	for(const [y1, y1m] of x1m.entries())
-	    for(const [x2, x2m] of y1m.entries())
-		for(const [y2, y2m] of x2m.entries())
-		    entries.push([x1, y1, x2, y2, y2m.length]);	
-    console.log(entries.length)
-    for(const e of entries)
-	console.log(...e);
+    const trunc = x => Math.abs(x) < 10 ** -prec ? 0..toFixed(prec) : x.toFixed(prec);
+    const buckets = d3.flatRollup(rray, v => v.map(r => r.coord), r => trunc(r.v1.x), r => trunc(r.v1.y), r => trunc(r.v2.x), r => trunc(r.v2.y), r => trunc(r.v3.x), r => trunc(r.v3.y), r => trunc(r.v4.x), r => trunc(r.v4.y));
+    console.log(buckets.length, 'base rhombuses')
+    for(const e of buckets)
+	console.log(String(e[8].length).padStart(3,' ') + ': ' + e.slice(0,8).map(c => c.padStart(7,' ')).join(' '));
 }
 
 const urlParams = new URLSearchParams(window.location.search);
