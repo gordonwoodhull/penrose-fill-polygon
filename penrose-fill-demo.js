@@ -191,10 +191,20 @@ function drawPenroseTiling() {
         vs = [...vs.slice(mini), ...vs.slice(0, mini)];
         rray.push(new Rhombus(...vs, rh.coord));
     }
-    const types = {};
-    for(const rh of rray)
-        types[`${rh.v1.print(0,0,2)}, ${rh.v2.print(0,0,2)}, ${rh.v3.print(0,0,2)}, ${rh.v4.print(0,0,2)}`] = true;
-    console.log(Object.keys(types));
+    
+    const prec = 2;
+    const rset = new Set();
+    const trunc = x => Math.abs(x) < 10 ** -prec ? "0" : x.toFixed(prec);
+    const buckets = d3.group(rray, r => trunc(r.v1.x), r => trunc(r.v1.y), r => trunc(r.v2.x), r => trunc(r.v2.y));
+    const entries = [];
+    for(const [x1, x1m] of buckets.entries())
+	for(const [y1, y1m] of x1m.entries())
+	    for(const [x2, x2m] of y1m.entries())
+		for(const [y2, y2m] of x2m.entries())
+		    entries.push([x1, y1, x2, y2, y2m.length]);	
+    console.log(entries.length)
+    for(const e of entries)
+	console.log(...e);
 }
 
 const urlParams = new URLSearchParams(window.location.search);
