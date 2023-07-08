@@ -106,6 +106,7 @@ function unfixPolygon() {
     window.location.search = urlParams;
 }
 
+
 function drawPenroseTiling() {
     var minTiles = document.getElementById("minimum").value;
     var boundsShape = document.querySelector('input[name="init_shape"]:checked').value;
@@ -125,54 +126,12 @@ function drawPenroseTiling() {
     const {
         center, r, polygon,
         robinsonTriangles, discardedTriangles, culledTriangles,
-        p3Rhombuses, culledRhombuses, fillsIdentified, fillsFound
+        p3Rhombuses, culledRhombuses, fillsIdentified, fillsFound,
+	rhombBases
     } = calculatePenroseTiling(
         +minTiles, width, height, boundsShape, startile, resolve_ragged, fixedCenter, fixedR
     );
     const dt = performance.now() - startt;
-    const rray = [];
-    for(const {rhombus: rh} of Object.values(p3Rhombuses)) {
-        const cx = (rh.v1.x + rh.v3.x) / 2,
-              cy = (rh.v1.y + rh.v3.y) / 2,
-              cx2 = (rh.v2.x + rh.v4.x) / 2,
-              cy2 = (rh.v2.y + rh.v4.y) / 2;
-        console.assert(Math.abs(cx - cx2) < 1);
-        console.assert(Math.abs(cy - cy2) < 1);
-        var vs = [
-            new Vector(rh.v1.x - cx, rh.v1.y - cy),
-            new Vector(rh.v2.x - cx, rh.v2.y - cy),
-            new Vector(rh.v3.x - cx, rh.v3.y - cy),
-            new Vector(rh.v4.x - cx, rh.v4.y - cy)];
-
-	// rotate if corner 2, or typographically corner 3 is closer to 0 radians
-	var do_it = false;
-	const at2 = Math.abs(Math.atan2(vs[2].y, vs[2].x)),
-	      at0 = Math.abs(Math.atan2(vs[0].y, vs[0].x));
-	if(Math.abs(at2 - at0) < 0.00001) { // or Math.abs(at0 - Math.PI / 2) < 0.00001
-	    const at3 = Math.abs(Math.atan2(vs[3].y, vs[3].x)),
-		  at1 = Math.abs(Math.atan2(vs[1].y, vs[1].x));
-	    if(at3 < at1)
-		do_it = true;
-	}
-	else if(at2 < at0)
-	    do_it = true;
-	if(do_it)
-	    vs = [...vs.slice(2), ...vs.slice(0, 2)];
-        rray.push(new Rhombus(...vs, rh.coord));
-    }
-    
-    const prec = 2;
-    const rset = new Set();
-    const trunc = x => Math.abs(x) < 10 ** -prec ? 0..toFixed(prec) : x.toFixed(prec);
-    const bases = d3.flatRollup(rray, v => v, r => trunc(r.v1.x), r => trunc(r.v1.y), r => trunc(r.v2.x), r => trunc(r.v2.y), r => trunc(r.v3.x), r => trunc(r.v3.y), r => trunc(r.v4.x), r => trunc(r.v4.y));
-    console.log(bases.length, 'base rhombuses')
-    for(const [i, e] of bases.entries()) {
-	e[8].forEach(rh => {
-	    p3Rhombuses[rh.coord].base = i;
-	});
-	
-	console.log(String(i).padStart(2,' ') + ' ' + ('(' + e[8].length + ')').padStart(4,' ') + ': ' + e.slice(0,8).map(c => c.padStart(7,' ')).join(' '));
-    }
 
     const fixLink = (!fixedCenter && !fixedR) ?
           '<a id="fix-polygon" href="#">fix</a></div>' :
@@ -189,7 +148,7 @@ function drawPenroseTiling() {
 <div>fills found: ${fillsFound.length}</div>` :
 	     '') +
 	    (showBaseRhombuses ?
-	     `<div>rhombus bases: ${bases.length}` : '') +
+	     `<div>rhombus bases: ${rhombBases.length}` : '') +
 	    `<div>calculation time: ${dt.toFixed(1)}ms</div>`);
     window.setTimeout(() => {
         d3.select('#fix-polygon').on('click', () => fixPolygon(center, r));
