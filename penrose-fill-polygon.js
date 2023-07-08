@@ -371,38 +371,63 @@ function lighten(color) {
 
 // unit-length edges
 export function calculateBaseRhombuses() {
-    const cos36_2 = Math.cos(Math.PI*2/10) / 2,
-	  sin36_2 = Math.sin(Math.PI*2/10) / 2;
-    const cos72_2 = Math.cos(Math.PI*2/5) / 2,
-	  sin72_2 = Math.sin(Math.PI*2/5) / 2;
-    // these are the easiest rotations to do the trig
+    const TAU = 2*Math.PI;
+    const cos36_2 = Math.cos(TAU/10) / 2,
+	  sin36_2 = Math.sin(TAU/10) / 2;
+    const cos72_2 = Math.cos(TAU/5) / 2,
+	  sin72_2 = Math.sin(TAU/5) / 2;
+    // the easiest rotations to do the trig
     //      -------
     //     /     /
     //    /     /
     //   -------
     const rhomb0 = [
-	[0.5 + cos72_2, sin72_2],
-	[cos72_2 - 0.5, sin72_2],
-	[-0.5 - cos72_2, -sin72_2],
-	[0.5 - cos72_2, -sin72_2]
+	new Vector(0.5 - cos72_2, -sin72_2),
+	new Vector(0.5 + cos72_2, sin72_2),
+	new Vector(cos72_2 - 0.5, sin72_2),
+	new Vector(-0.5 - cos72_2, -sin72_2)
     ];
     const rhomb9 = [
-	[0.5 + cos36_2, sin36_2],
-	[cos36_2 - 0.5, sin36_2],
-	[-0.5 - cos36_2, -sin36_2],
-	[0.5 - cos36_2, -sin36_2]
+	new Vector(0.5 + cos36_2, sin36_2),
+	new Vector(cos36_2 - 0.5, sin36_2),
+	new Vector(-0.5 - cos36_2, -sin36_2),
+	new Vector(0.5 - cos36_2, -sin36_2)
     ];
 
-    const TAU = 2*Math.PI
     const rots = [0, TAU/5, TAU*2/5, TAU*3/5, TAU*4/5,
 		  TAU*2/10, -TAU/10, -TAU*4/10, TAU*3/10, 0];
     return d3.range(10)
-	.map(i => (i < 5 ? rhomb0 : rhomb9).map(([x,y]) => [
-	    x * Math.cos(rots[i]) - y * Math.sin(rots[i]),
-	    x * Math.sin(rots[i]) + y * Math.cos(rots[i])
-	]));
+	.map(i => (i < 5 ? rhomb0 : rhomb9).map(({x,y}) =>
+	    new Vector(
+		x * Math.cos(rots[i]) - y * Math.sin(rots[i]),
+		x * Math.sin(rots[i]) + y * Math.cos(rots[i])
+	    )));
 }
 let base_rhombuses = calculateBaseRhombuses();
+
+export const truncate_float = prec => x => Math.abs(x) < 10 ** -prec ? 0..toFixed(prec) : x.toFixed(prec);
+
+export function rhomb_key(vs, prec = 11) {
+    if(vs instanceof Rhombus)
+	vs = [vs.v1, vs.v2, vs.v3, vs.v4];
+    const trunc = truncate_float(prec);
+    
+    // rotate point by 2 if corner 2, or typographically corner 3 is closer to 0 radians
+    var do_it = false;
+    const at2 = Math.abs(Math.atan2(vs[2].y, vs[2].x)),
+	  at0 = Math.abs(Math.atan2(vs[0].y, vs[0].x));
+    if(Math.abs(at2 - at0) < 0.00001) { // or Math.abs(at0 - Math.PI / 2) < 0.00001
+	const at3 = Math.abs(Math.atan2(vs[3].y, vs[3].x)),
+	      at1 = Math.abs(Math.atan2(vs[1].y, vs[1].x));
+	if(at3 < at1)
+	    do_it = true;
+    }
+    else if(at2 < at0)
+	do_it = true;
+    if(do_it)
+	vs = [...vs.slice(2), ...vs.slice(0, 2)];
+    return vs.flatMap(v => [trunc(v.x), trunc(v.y)]).join(',');
+}
 
 export function calculateTrianglesBB(tris) {
     const tl = new Vector(
@@ -614,41 +639,40 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
               cy2 = (rh.v2.y + rh.v4.y) / 2;
         console.assert(Math.abs(cx - cx2) < 1);
         console.assert(Math.abs(cy - cy2) < 1);
+	rhombhash[rh.coord].center = new Vector(cx, cy);
         var vs = [
             new Vector(rh.v1.x - cx, rh.v1.y - cy),
             new Vector(rh.v2.x - cx, rh.v2.y - cy),
             new Vector(rh.v3.x - cx, rh.v3.y - cy),
             new Vector(rh.v4.x - cx, rh.v4.y - cy)];
+	rhombhash[rh.coord].key = rhomb_key(vs);
+    }
 
-	// rotate point by 2 if corner 2, or typographically corner 3 is closer to 0 radians
-	var do_it = false;
-	const at2 = Math.abs(Math.atan2(vs[2].y, vs[2].x)),
-	      at0 = Math.abs(Math.atan2(vs[0].y, vs[0].x));
-	if(Math.abs(at2 - at0) < 0.00001) { // or Math.abs(at0 - Math.PI / 2) < 0.00001
-	    const at3 = Math.abs(Math.atan2(vs[3].y, vs[3].x)),
-		  at1 = Math.abs(Math.atan2(vs[1].y, vs[1].x));
-	    if(at3 < at1)
-		do_it = true;
+    const key_to_base = {};
+    const base_to_key = [];
+    for(const [i, rh] of base_rhombuses.entries()) {
+	const key = rhomb_key(rh);
+	key_to_base[key] = i;
+	base_to_key.push(key);
+    }
+    const not_found = new Set(),
+	  bases_found = new Set();
+    for(const rhombdef of Object.values(rhombhash)) {
+	const base = key_to_base[rhombdef.key];
+	if(base !== undefined) {
+	    bases_found.add(base);
+	    rhombdef.base = base;
 	}
-	else if(at2 < at0)
-	    do_it = true;
-	if(do_it)
-	    vs = [...vs.slice(2), ...vs.slice(0, 2)];
-        rray.push(new Rhombus(...vs, rh.coord));
+	else {
+	    not_found.add(rhombdef.key);
+	    rhombdef.base = null
+	}
     }
-    
-    const prec = 11;
-    const rset = new Set();
-    const trunc = x => Math.abs(x) < 10 ** -prec ? 0..toFixed(prec) : x.toFixed(prec);
-    const bases = d3.flatRollup(rray, v => v, r => trunc(r.v1.x), r => trunc(r.v1.y), r => trunc(r.v2.x), r => trunc(r.v2.y), r => trunc(r.v3.x), r => trunc(r.v3.y), r => trunc(r.v4.x), r => trunc(r.v4.y));
-    console.log(bases.length, 'base rhombuses')
-    for(const [i, e] of bases.entries()) {
-	e[8].forEach(rh => {
-	    rhombhash[rh.coord].base = i;
-	});
-	
-	console.log(String(i).padStart(2,' ') + ' ' + ('(' + e[8].length + ')').padStart(4,' ') + ': ' + e.slice(0,8).map(c => c.padStart(7,' ')).join(' '));
-    }
+    for(const nf of not_found)
+	console.log('not found', nf);
+    for(const base of d3.range(10))
+	if(!bases_found.has(base))
+	    console.log('unused', base_to_key[base]);
     
     return {
         center, r,
@@ -660,7 +684,7 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
         culledRhombuses: culledRhombs,
         fillsIdentified: find_tris,
         fillsFound: found_tris,
-	rhombBases: bases,
+	rhombBases: d3.range(10),
 	scaleFunction: scale
     };
 }

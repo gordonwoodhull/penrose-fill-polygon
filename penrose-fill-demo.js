@@ -72,7 +72,7 @@ function drawRhombuses(selector, rhombhash, polygon, tl = null, ofs = null, scal
     const xform = x => (x - tl.x) * scale.x + ofs.x;
     const yform = y => (y - tl.y) * scale.y + ofs.y;
     const rhombuses = Object.values(rhombhash).map(({rhombus}) => rhombus);
-    const categorical_colors = d3.schemeSet3.concat(d3.schemeTableau10);
+    const categorical_colors = d3.schemeTableau10; // or d3.schemeSet3
     d3.select(`${selector} g#rhombuses`)
 	.selectAll('path.robinson').data(rhombuses)
 	.join('path')
