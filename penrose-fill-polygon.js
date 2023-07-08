@@ -56,9 +56,9 @@ export class Vector {
     }
 
     print(xform, yform, prec = 4) {
-	xform = xform || (x => x);
-	yform = yform || (y => y);
-	return `${xform(this.x).toFixed(prec)}, ${yform(this.y).toFixed(prec)}`;
+        xform = xform || (x => x);
+        yform = yform || (y => y);
+        return `${xform(this.x).toFixed(prec)}, ${yform(this.y).toFixed(prec)}`;
     }
 
     multiply(multiplier) {
@@ -84,7 +84,7 @@ export class Triangle {
         this.v3 = v3;
 
         this.fillColor = fillColor;
-	this.coord = coord;
+        this.coord = coord;
     }
 
     pointInside(pt) {
@@ -184,63 +184,63 @@ export class Rhombus {
         this.v1 = v1;
         this.v2 = v2;
         this.v3 = v3;
-	this.v4 = v4;
+        this.v4 = v4;
 
         this.fillColor = fillColor;
-	this.coord = coord;
+        this.coord = coord;
     }
 }
 
 const rtri_neighbors = {
     CC: {
-	0: {external: true, side: 1, hand: 'r'},
-	1: {prefix: 'Y', enter: 1},
-	2: {external: true, side: 0}
+        0: {external: true, side: 1, hand: 'r'},
+        1: {prefix: 'Y', enter: 1},
+        2: {external: true, side: 0}
     },
     YC: {
-	0: {external: true, side: 2},
-	1: {prefix: 'C', enter: 1},
-	2: {external: true, side: 1, hand: 'l'}
+        0: {external: true, side: 2},
+        1: {prefix: 'C', enter: 1},
+        2: {external: true, side: 1, hand: 'l'}
     },
     XD: {
-	0: {external: true, side: 1},
-	1: {external: true, side: 2, hand: 'r'},
-	2: {prefix: 'D', enter: 2}
+        0: {external: true, side: 1},
+        1: {external: true, side: 2, hand: 'r'},
+        2: {prefix: 'D', enter: 2}
     },
     DD: {
-	0: {external: true, side: 2, hand: 'l'},
-	1: {external: true, side: 0},
-	2: {prefix: 'X', enter: 2}
+        0: {external: true, side: 2, hand: 'l'},
+        1: {external: true, side: 0},
+        2: {prefix: 'X', enter: 2}
     },
     YX: {
-	0: {external: true, side: 0, hand: 'r'},
-	1: {prefix: 'C', enter: 1},
-	2: {external: true, side: 2, hand: 'l'}
+        0: {external: true, side: 0, hand: 'r'},
+        1: {prefix: 'C', enter: 1},
+        2: {external: true, side: 2, hand: 'l'}
     },
     CX: {
-	0: {external: true, side: 2, hand: 'r'},
-	1: {prefix: 'Y', enter: 1},
-	2: {prefix: 'X', enter: 1}
+        0: {external: true, side: 2, hand: 'r'},
+        1: {prefix: 'Y', enter: 1},
+        2: {prefix: 'X', enter: 1}
     },
     XX: {
-	0: {external: true, side: 1},
-	1: {prefix: 'C', enter: 2},
-	2: {external: true, side: 0, hand: 'l'}
+        0: {external: true, side: 1},
+        1: {prefix: 'C', enter: 2},
+        2: {external: true, side: 0, hand: 'l'}
     },
     YY: {
-	0: {external: true, side: 2},
-	1: {external: true, side: 0, hand: 'r'},
-	2: {prefix: 'D', enter: 1}
+        0: {external: true, side: 2},
+        1: {external: true, side: 0, hand: 'r'},
+        2: {prefix: 'D', enter: 1}
     },
     DY: {
-	0: {external: true, side: 1, hand: 'l'},
-	1: {prefix: 'Y', enter: 2},
-	2: {prefix: 'X', enter: 2}
+        0: {external: true, side: 1, hand: 'l'},
+        1: {prefix: 'Y', enter: 2},
+        2: {prefix: 'X', enter: 2}
     },
     XY: {
-	0: {external: true, side: 0, hand: 'l'},
-	1: {external: true, side: 1, hand: 'r'},
-	2: {prefix: 'D', enter: 2}
+        0: {external: true, side: 0, hand: 'l'},
+        1: {external: true, side: 1, hand: 'r'},
+        2: {prefix: 'D', enter: 2}
     }
 };
 
@@ -251,57 +251,57 @@ const other_hand = {
 
 const rtri_entries = {
     C: {
-	0: {w: {part: 'C', side: 2}},
-	1: {l: {part: 'Y', side: 2},
-	    r: {part: 'C', side: 0}},
-	2: {w: {part: 'Y', side: 0}}
+        0: {w: {part: 'C', side: 2}},
+        1: {l: {part: 'Y', side: 2},
+            r: {part: 'C', side: 0}},
+        2: {w: {part: 'Y', side: 0}}
     },
     D: {
-	0: {w: {part: 'D', side: 1}},
-	1: {w: {part: 'X', side: 0}},
-	2: {l: {part: 'D', side: 0},
-	    r: {part: 'X', side: 1}}
+        0: {w: {part: 'D', side: 1}},
+        1: {w: {part: 'X', side: 0}},
+        2: {l: {part: 'D', side: 0},
+            r: {part: 'X', side: 1}}
     },
     X: {
-	0: {l: {part: 'X', side: 2},
-	    r: {part: 'Y', side: 0}},
-	1: {w: {part: 'X', side: 0}},
-	2: {l: {part: 'Y', side: 2},
-	    r: {part: 'C', side: 0}}
+        0: {l: {part: 'X', side: 2},
+            r: {part: 'Y', side: 0}},
+        1: {w: {part: 'X', side: 0}},
+        2: {l: {part: 'Y', side: 2},
+            r: {part: 'C', side: 0}}
     },
     Y: {
-	0: {l: {part: 'X', side: 0},
-	    r: {part: 'Y', side: 1}},
-	1: {l: {part: 'D', side: 0},
-	    r: {part: 'X', side: 1}},
-	2: {w: {part: 'Y', side: 0}}
+        0: {l: {part: 'X', side: 0},
+            r: {part: 'Y', side: 1}},
+        1: {l: {part: 'D', side: 0},
+            r: {part: 'X', side: 1}},
+        2: {w: {part: 'Y', side: 0}}
     }
 }
 
 export function tatham_neighbor(coord, side) {
     if(coord.length < 2)
-	throw new Error("no neighbor");
+        throw new Error("no neighbor");
     const pre2 = coord.slice(0, 2);
     const neighbors = rtri_neighbors[pre2];
     console.assert(neighbors, 'unknown prefix', pre2);
     const nei = neighbors[side];
     var result;
     if(nei.external) {
-	console.assert(nei.side !== undefined);
-	const [parent, pside] = tatham_neighbor(coord.slice(1), nei.side);
-	const enter = rtri_entries[parent[0]][pside];
-	let part, side;
-	if(nei.hand) {
-	    console.assert(enter.l);
-	    ({part, side} = enter[other_hand[nei.hand]]);
-	} else {
-	    console.assert(enter.w);
-	    ({part, side} = enter.w);
-	}
-	return [part + parent, side];
+        console.assert(nei.side !== undefined);
+        const [parent, pside] = tatham_neighbor(coord.slice(1), nei.side);
+        const enter = rtri_entries[parent[0]][pside];
+        let part, side;
+        if(nei.hand) {
+            console.assert(enter.l);
+            ({part, side} = enter[other_hand[nei.hand]]);
+        } else {
+            console.assert(enter.w);
+            ({part, side} = enter.w);
+        }
+        return [part + parent, side];
     }
     else {
-	return [nei.prefix + coord.slice(1), nei.enter];
+        return [nei.prefix + coord.slice(1), nei.enter];
     }
 }
 
@@ -310,22 +310,22 @@ export function tatham_neighbor_or_null(coord, side) {
         return tatham_neighbor(coord, side)[0];
     }
     catch(xep) {
-	console.warn('no neighbor', side, 'for', coord);
+        console.warn('no neighbor', side, 'for', coord);
         return null;
     }
 }
 
 const shape_spec = {
     square: {
-	sides: 4,
-	offset: 0.5
+        sides: 4,
+        offset: 0.5
     },
     pentagon: {
-	sides: 5,
-	offset: -0.25
+        sides: 5,
+        offset: -0.25
     },
     hexagon: {
-	sides: 6
+        sides: 6
     }
 };
 
@@ -348,11 +348,11 @@ function generateTriangles(triangles, filt, enough) {
             new_triangles = new_triangles.concat(trig.split());
         }
         triangles = new_triangles.filter(tri => {
-	    if(filt(tri))
-		return true;
-	    discarded.push(tri);
-	    return false;
-	});
+            if(filt(tri))
+                return true;
+            discarded.push(tri);
+            return false;
+        });
     }
     while(triangles.length && !enough(triangles));
     return [triangles, discarded];
@@ -373,35 +373,35 @@ function lighten(color) {
 export function calculateBaseRhombuses() {
     const TAU = 2*Math.PI;
     const cos36_2 = Math.cos(TAU/10) / 2,
-	  sin36_2 = Math.sin(TAU/10) / 2;
+          sin36_2 = Math.sin(TAU/10) / 2;
     const cos72_2 = Math.cos(TAU/5) / 2,
-	  sin72_2 = Math.sin(TAU/5) / 2;
+          sin72_2 = Math.sin(TAU/5) / 2;
     // the easiest rotations to do the trig
     //      -------
     //     /     /
     //    /     /
     //   -------
     const rhomb0 = [
-	new Vector(0.5 - cos72_2, -sin72_2),
-	new Vector(0.5 + cos72_2, sin72_2),
-	new Vector(cos72_2 - 0.5, sin72_2),
-	new Vector(-0.5 - cos72_2, -sin72_2)
+        new Vector(0.5 - cos72_2, -sin72_2),
+        new Vector(0.5 + cos72_2, sin72_2),
+        new Vector(cos72_2 - 0.5, sin72_2),
+        new Vector(-0.5 - cos72_2, -sin72_2)
     ];
     const rhomb9 = [
-	new Vector(0.5 + cos36_2, sin36_2),
-	new Vector(cos36_2 - 0.5, sin36_2),
-	new Vector(-0.5 - cos36_2, -sin36_2),
-	new Vector(0.5 - cos36_2, -sin36_2)
+        new Vector(0.5 + cos36_2, sin36_2),
+        new Vector(cos36_2 - 0.5, sin36_2),
+        new Vector(-0.5 - cos36_2, -sin36_2),
+        new Vector(0.5 - cos36_2, -sin36_2)
     ];
 
     const rots = [0, TAU/5, TAU*2/5, TAU*3/5, TAU*4/5,
-		  TAU*2/10, -TAU/10, -TAU*4/10, TAU*3/10, 0];
+                  TAU*2/10, -TAU/10, -TAU*4/10, TAU*3/10, 0];
     return d3.range(10)
-	.map(i => (i < 5 ? rhomb0 : rhomb9).map(({x,y}) =>
-	    new Vector(
-		x * Math.cos(rots[i]) - y * Math.sin(rots[i]),
-		x * Math.sin(rots[i]) + y * Math.cos(rots[i])
-	    )));
+        .map(i => (i < 5 ? rhomb0 : rhomb9).map(({x,y}) =>
+            new Vector(
+                x * Math.cos(rots[i]) - y * Math.sin(rots[i]),
+                x * Math.sin(rots[i]) + y * Math.cos(rots[i])
+            )));
 }
 let base_rhombuses = calculateBaseRhombuses();
 
@@ -409,51 +409,51 @@ export const truncate_float = prec => x => Math.abs(x) < 10 ** -prec ? 0..toFixe
 
 export function rhomb_key(vs, prec = 11) {
     if(vs instanceof Rhombus)
-	vs = [vs.v1, vs.v2, vs.v3, vs.v4];
+        vs = [vs.v1, vs.v2, vs.v3, vs.v4];
     const trunc = truncate_float(prec);
     
     // rotate point by 2 if corner 2, or typographically corner 3 is closer to 0 radians
     var do_it = false;
     const at2 = Math.abs(Math.atan2(vs[2].y, vs[2].x)),
-	  at0 = Math.abs(Math.atan2(vs[0].y, vs[0].x));
+          at0 = Math.abs(Math.atan2(vs[0].y, vs[0].x));
     if(Math.abs(at2 - at0) < 0.00001) { // or Math.abs(at0 - Math.PI / 2) < 0.00001
-	const at3 = Math.abs(Math.atan2(vs[3].y, vs[3].x)),
-	      at1 = Math.abs(Math.atan2(vs[1].y, vs[1].x));
-	if(at3 < at1)
-	    do_it = true;
+        const at3 = Math.abs(Math.atan2(vs[3].y, vs[3].x)),
+              at1 = Math.abs(Math.atan2(vs[1].y, vs[1].x));
+        if(at3 < at1)
+            do_it = true;
     }
     else if(at2 < at0)
-	do_it = true;
+        do_it = true;
     if(do_it)
-	vs = [...vs.slice(2), ...vs.slice(0, 2)];
+        vs = [...vs.slice(2), ...vs.slice(0, 2)];
     return vs.flatMap(v => [trunc(v.x), trunc(v.y)]).join(',');
 }
 
 export function calculateTrianglesBB(tris) {
     const tl = new Vector(
-	d3.min(tris, tri => d3.min([tri.v1.x, tri.v2.x, tri.v3.x])),
-	d3.min(tris, tri => d3.min([tri.v1.y, tri.v2.y, tri.v3.y])));
+        d3.min(tris, tri => d3.min([tri.v1.x, tri.v2.x, tri.v3.x])),
+        d3.min(tris, tri => d3.min([tri.v1.y, tri.v2.y, tri.v3.y])));
     const br = new Vector(
-	d3.max(tris, tri => d3.max([tri.v1.x, tri.v2.x, tri.v3.x])),
-	d3.max(tris, tri => d3.max([tri.v1.y, tri.v2.y, tri.v3.y])));
+        d3.max(tris, tri => d3.max([tri.v1.x, tri.v2.x, tri.v3.x])),
+        d3.max(tris, tri => d3.max([tri.v1.y, tri.v2.y, tri.v3.y])));
     return {tl, br};
 }
 
 export function calculateRhombusesBB(rhombs) {
     const tl = new Vector(
-	d3.min(rhombs, rhomb => d3.min([rhomb.v1.x, rhomb.v2.x, rhomb.v3.x, rhomb.v4.x])),
-	d3.min(rhombs, rhomb => d3.min([rhomb.v1.y, rhomb.v2.y, rhomb.v3.y, rhomb.v4.y])));
+        d3.min(rhombs, rhomb => d3.min([rhomb.v1.x, rhomb.v2.x, rhomb.v3.x, rhomb.v4.x])),
+        d3.min(rhombs, rhomb => d3.min([rhomb.v1.y, rhomb.v2.y, rhomb.v3.y, rhomb.v4.y])));
     const br = new Vector(
-	d3.max(rhombs, rhomb => d3.max([rhomb.v1.x, rhomb.v2.x, rhomb.v3.x, rhomb.v4.x])),
-	d3.max(rhombs, rhomb => d3.max([rhomb.v1.y, rhomb.v2.y, rhomb.v3.y, rhomb.v4.y])));
+        d3.max(rhombs, rhomb => d3.max([rhomb.v1.x, rhomb.v2.x, rhomb.v3.x, rhomb.v4.x])),
+        d3.max(rhombs, rhomb => d3.max([rhomb.v1.y, rhomb.v2.y, rhomb.v3.y, rhomb.v4.y])));
     return {tl, br};
 }
 
 export function scaleVector(tl, scale) {
     return v => {
-	return new Vector(
-	    (v.x - tl.x) * scale,
-	    (v.y - tl.y) * scale);
+        return new Vector(
+            (v.x - tl.x) * scale,
+            (v.y - tl.y) * scale);
     };
 }
 
@@ -463,20 +463,20 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
     switch(startTile) {
     case 'C':
         hei = Math.min(width * ratio, height);
-	startri = new TriangleC(new Vector(width / 2 - hei / 2 / ratio, hei / 2), new Vector(width / 2 + hei / 2 / ratio, 0), new Vector(width / 2 + hei / 2 / ratio, hei), startTile);
-	break;
+        startri = new TriangleC(new Vector(width / 2 - hei / 2 / ratio, hei / 2), new Vector(width / 2 + hei / 2 / ratio, 0), new Vector(width / 2 + hei / 2 / ratio, hei), startTile);
+        break;
     case 'D':
         hei = Math.min(width * ratio, height);
-	startri = new TriangleD(new Vector(width / 2 - hei / 2 / ratio, hei / 2), new Vector(width / 2 + hei / 2 / ratio, 0), new Vector(width / 2 + hei / 2 / ratio, hei), startTile);
-	break;
+        startri = new TriangleD(new Vector(width / 2 - hei / 2 / ratio, hei / 2), new Vector(width / 2 + hei / 2 / ratio, 0), new Vector(width / 2 + hei / 2 / ratio, hei), startTile);
+        break;
     case 'X':
         hei = Math.min(width / 2.0 * ratio, height);
-	startri = new TriangleX(new Vector(width / 2.0, 0), new Vector(width / 2.0 + hei / ratio, hei), new Vector(width / 2.0 - hei / ratio, hei), startTile);
-	break;
+        startri = new TriangleX(new Vector(width / 2.0, 0), new Vector(width / 2.0 + hei / ratio, hei), new Vector(width / 2.0 - hei / ratio, hei), startTile);
+        break;
     case 'Y':
         hei = Math.min(width / 2.0 * ratio, height);
-	startri = new TriangleY(new Vector(width / 2.0, 0), new Vector(width / 2.0 + hei / ratio, hei), new Vector(width / 2.0 - hei / ratio, hei), startTile);
-	break;
+        startri = new TriangleY(new Vector(width / 2.0, 0), new Vector(width / 2.0 + hei / ratio, hei), new Vector(width / 2.0 - hei / ratio, hei), startTile);
+        break;
     }
     var triangles = [startri], polygon;
     if(center && r)
@@ -484,15 +484,15 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
     else {
         const [xmin, xmax] = d3.extent([startri.v1.x, startri.v2.x, startri.v3.x]);
         const [ymin, ymax] = d3.extent([startri.v1.y, startri.v2.y, startri.v3.y]);
-	r = d3.randomUniform(width/1000, width/8)();
+        r = d3.randomUniform(width/1000, width/8)();
         let r_tries = 5, found = false;
         do {
-	    let xrand = d3.randomUniform(xmin + r, xmax - r),
-	        yrand = d3.randomUniform(ymin + r, ymax - r);
+            let xrand = d3.randomUniform(xmin + r, xmax - r),
+                yrand = d3.randomUniform(ymin + r, ymax - r);
             let c_tries = 10;
             do {
-	        center = new Vector(xrand(), yrand());
-	        polygon = regularPolygon(center, r, boundsShape);
+                center = new Vector(xrand(), yrand());
+                polygon = regularPolygon(center, r, boundsShape);
                 found = polygon.every(pt => startri.pointInside(pt));
             } while(--c_tries && !found);
             r /= 2;
@@ -508,127 +508,127 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
     console.assert(!isNaN(minTiles));
     var discarded;
     [triangles, discarded] = generateTriangles(
-	triangles,
-	tri => polyTris.some(ptri => trianglesIntersect(ptri, tri)),
-	tris => tris.length / 2 > minTiles);
+        triangles,
+        tri => polyTris.some(ptri => trianglesIntersect(ptri, tri)),
+        tris => tris.length / 2 > minTiles);
 
     const trihash = {};
     for(var t of triangles)
-	trihash[t.coord] = t;
+        trihash[t.coord] = t;
     const disind = [];
     const find_tris = [];
     for(var [i, t] of triangles.entries()) {
-	var oh = tatham_neighbor_or_null(t.coord, 0);
-	var t2;
-	if(!oh || !(t2 = trihash[oh])) {
-	    if(resolveRagged === "cull")
-		disind.push(i);
-	    else if(resolveRagged === "fill") {
-		var nei1 = tatham_neighbor_or_null(t.coord, 1),
-		    nei2 = tatham_neighbor_or_null(t.coord, 2);
-		if(oh && nei1 && nei2 && trihash[nei1] && trihash[nei2])
-		    find_tris.push(oh);
-		else
-		    disind.push(i);
-	    }
-	}
+        var oh = tatham_neighbor_or_null(t.coord, 0);
+        var t2;
+        if(!oh || !(t2 = trihash[oh])) {
+            if(resolveRagged === "cull")
+                disind.push(i);
+            else if(resolveRagged === "fill") {
+                var nei1 = tatham_neighbor_or_null(t.coord, 1),
+                    nei2 = tatham_neighbor_or_null(t.coord, 2);
+                if(oh && nei1 && nei2 && trihash[nei1] && trihash[nei2])
+                    find_tris.push(oh);
+                else
+                    disind.push(i);
+            }
+        }
     }
     var found_tris = [];
     if(find_tris.length) {
-	[found_tris] = generateTriangles(
-	    [startri],
-	    tri => find_tris.some(find => find.indexOf(tri.coord) === find.length - tri.coord.length),
-	    tris => !tris.length || tris[0].coord.length === find_tris[0].length);
+        [found_tris] = generateTriangles(
+            [startri],
+            tri => find_tris.some(find => find.indexOf(tri.coord) === find.length - tri.coord.length),
+            tris => !tris.length || tris[0].coord.length === find_tris[0].length);
         if(found_tris.length < find_tris.length) {
             console.log('did not find other halves of all sought triangles:');
             console.log('sought', find_tris);
             console.log('found', found_tris.map(({coord}) => coord));
         }
-	for(const tri of found_tris)
-	    trihash[tri.coord] = tri;
-	triangles.push(...found_tris);
+        for(const tri of found_tris)
+            trihash[tri.coord] = tri;
+        triangles.push(...found_tris);
     }
     const rhombhash = {};
     const tri2rhomb = {};
     for(var [i, t] of triangles.entries()) {
-	var oh = tatham_neighbor_or_null(t.coord, 0);
-	var t2;
-	if(oh && (t2 = trihash[oh])) {
-	    const rhombcoord = [t.coord, oh].sort().join(',');
-	    if(rhombhash[rhombcoord])
-		continue;
-	    else {
-		tri2rhomb[t.coord] = rhombcoord;
-		tri2rhomb[oh] = rhombcoord;
+        var oh = tatham_neighbor_or_null(t.coord, 0);
+        var t2;
+        if(oh && (t2 = trihash[oh])) {
+            const rhombcoord = [t.coord, oh].sort().join(',');
+            if(rhombhash[rhombcoord])
+                continue;
+            else {
+                tri2rhomb[t.coord] = rhombcoord;
+                tri2rhomb[oh] = rhombcoord;
                 const fillColor = (find_tris.includes(t.coord) || find_tris.includes(oh)) ?
                       lighten(t.fillColor) : t.fillColor;
-		const rhombus = new Rhombus(t.v1, t.v2, t2.v1, t2.v2, rhombcoord, fillColor);
-		rhombhash[rhombcoord] = {
-		    rhombus,
-		    tri1: t,
-		    tri2: t2
-		};
-	    }
-	}
+                const rhombus = new Rhombus(t.v1, t.v2, t2.v1, t2.v2, rhombcoord, fillColor);
+                rhombhash[rhombcoord] = {
+                    rhombus,
+                    tri1: t,
+                    tri2: t2
+                };
+            }
+        }
     }
     const culledTris = [];
     for(i = disind.length - 1; i >= 0; i--) {
-	culledTris.push(triangles[disind[i]]);
-	triangles.splice(disind[i], 1);
+        culledTris.push(triangles[disind[i]]);
+        triangles.splice(disind[i], 1);
     }
     for(const [rhombcoord, {tri1, tri2, rhombus}] of Object.entries(rhombhash)) {
-	const neighbors = [];
-	var j = 0;
-	// X1, X2, Y1, Y2 or C1, C2, D1, D2
-	for(const tri of [tri1, tri2])
-	    for(const side of [1, 2]) {
-		var nei = tatham_neighbor_or_null(tri.coord, side);
-		const rhombnei = nei && tri2rhomb[nei] || null;
-		neighbors.push(rhombnei);
-	    }
-	rhombhash[rhombcoord].neighbors = neighbors;
+        const neighbors = [];
+        var j = 0;
+        // X1, X2, Y1, Y2 or C1, C2, D1, D2
+        for(const tri of [tri1, tri2])
+            for(const side of [1, 2]) {
+                var nei = tatham_neighbor_or_null(tri.coord, side);
+                const rhombnei = nei && tri2rhomb[nei] || null;
+                neighbors.push(rhombnei);
+            }
+        rhombhash[rhombcoord].neighbors = neighbors;
     }
     const culledRhombs = [];
     if(resolveRagged === "cull") {
-	var cullRhombs;
-	do {
-	    cullRhombs = Object.values(rhombhash)
-		.filter(({neighbors}) => neighbors.filter(n => n).length < 2);
-	    for(const {rhombus, neighbors} of cullRhombs) {
-		culledRhombs.push(rhombus);
-		for(nei of neighbors) {
-		    if(!nei)
-			continue;
-		    const entry = rhombhash[nei];
-		    for(const i of d3.range(4)) {
-			if(entry.neighbors[i] === rhombus.coord)
-			    entry.neighbors[i] = null;
-		    }
-		}
-		delete rhombhash[rhombus.coord];
-	    }
-	}
-	while(cullRhombs.length);
+        var cullRhombs;
+        do {
+            cullRhombs = Object.values(rhombhash)
+                .filter(({neighbors}) => neighbors.filter(n => n).length < 2);
+            for(const {rhombus, neighbors} of cullRhombs) {
+                culledRhombs.push(rhombus);
+                for(nei of neighbors) {
+                    if(!nei)
+                        continue;
+                    const entry = rhombhash[nei];
+                    for(const i of d3.range(4)) {
+                        if(entry.neighbors[i] === rhombus.coord)
+                            entry.neighbors[i] = null;
+                    }
+                }
+                delete rhombhash[rhombus.coord];
+            }
+        }
+        while(cullRhombs.length);
     }
     discarded.concat(culledTris).forEach(tri => tri.fillColor = 'none');
     var elengths = []
     for(const {rhombus: rh} of Object.values(rhombhash))
-	for(const [v1, v2] of [[rh.v1,rh.v2], [rh.v2,rh.v3], [rh.v3, rh.v4], [rh.v4, rh.v1]])
-	    elengths.push(Math.hypot(v2.x - v1.x, v2.y - v1.y));
+        for(const [v1, v2] of [[rh.v1,rh.v2], [rh.v2,rh.v3], [rh.v3, rh.v4], [rh.v4, rh.v1]])
+            elengths.push(Math.hypot(v2.x - v1.x, v2.y - v1.y));
     const meanEdgeLength = d3.mean(elengths);
     console.log('edge lengths mean', meanEdgeLength, 'stddev', d3.deviation(elengths));
     const {tl, br} = calculateRhombusesBB(Object.values(rhombhash).map(({rhombus}) => rhombus));
     const scale = scaleVector(tl, 1/meanEdgeLength);
     for(const {rhombus: rh} of Object.values(rhombhash)) {
-	rh.v1 = scale(rh.v1);
-	rh.v2 = scale(rh.v2);
-	rh.v3 = scale(rh.v3);
-	rh.v4 = scale(rh.v4);
+        rh.v1 = scale(rh.v1);
+        rh.v2 = scale(rh.v2);
+        rh.v3 = scale(rh.v3);
+        rh.v4 = scale(rh.v4);
     }
     elengths = []
     for(const {rhombus: rh} of Object.values(rhombhash))
-	for(const [v1, v2] of [[rh.v1,rh.v2], [rh.v2,rh.v3], [rh.v3, rh.v4], [rh.v4, rh.v1]])
-	    elengths.push(Math.hypot(v2.x - v1.x, v2.y - v1.y));
+        for(const [v1, v2] of [[rh.v1,rh.v2], [rh.v2,rh.v3], [rh.v3, rh.v4], [rh.v4, rh.v1]])
+            elengths.push(Math.hypot(v2.x - v1.x, v2.y - v1.y));
     console.log('edge lengths mean', d3.mean(elengths), 'stddev', d3.deviation(elengths));
     
     const rray = [];
@@ -639,40 +639,40 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
               cy2 = (rh.v2.y + rh.v4.y) / 2;
         console.assert(Math.abs(cx - cx2) < 1);
         console.assert(Math.abs(cy - cy2) < 1);
-	rhombhash[rh.coord].center = new Vector(cx, cy);
+        rhombhash[rh.coord].center = new Vector(cx, cy);
         var vs = [
             new Vector(rh.v1.x - cx, rh.v1.y - cy),
             new Vector(rh.v2.x - cx, rh.v2.y - cy),
             new Vector(rh.v3.x - cx, rh.v3.y - cy),
             new Vector(rh.v4.x - cx, rh.v4.y - cy)];
-	rhombhash[rh.coord].key = rhomb_key(vs);
+        rhombhash[rh.coord].key = rhomb_key(vs);
     }
 
     const key_to_base = {};
     const base_to_key = [];
     for(const [i, rh] of base_rhombuses.entries()) {
-	const key = rhomb_key(rh);
-	key_to_base[key] = i;
-	base_to_key.push(key);
+        const key = rhomb_key(rh);
+        key_to_base[key] = i;
+        base_to_key.push(key);
     }
     const not_found = new Set(),
-	  bases_found = new Set();
+          bases_found = new Set();
     for(const rhombdef of Object.values(rhombhash)) {
-	const base = key_to_base[rhombdef.key];
-	if(base !== undefined) {
-	    bases_found.add(base);
-	    rhombdef.base = base;
-	}
-	else {
-	    not_found.add(rhombdef.key);
-	    rhombdef.base = null
-	}
+        const base = key_to_base[rhombdef.key];
+        if(base !== undefined) {
+            bases_found.add(base);
+            rhombdef.base = base;
+        }
+        else {
+            not_found.add(rhombdef.key);
+            rhombdef.base = null
+        }
     }
     for(const nf of not_found)
-	console.log('not found', nf);
+        console.log('not found', nf);
     for(const base of d3.range(10))
-	if(!bases_found.has(base))
-	    console.log('unused', base_to_key[base]);
+        if(!bases_found.has(base))
+            console.log('unused', base_to_key[base]);
     
     return {
         center, r,
@@ -684,7 +684,7 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
         culledRhombuses: culledRhombs,
         fillsIdentified: find_tris,
         fillsFound: found_tris,
-	rhombBases: d3.range(10),
-	scaleFunction: scale
+        rhombBases: d3.range(10),
+        scaleFunction: scale
     };
 }
