@@ -1,3 +1,7 @@
+var Vector, calculatePenroseTiling, calculateTrianglesBB;
+import('./penrose-fill-polygon.js')
+    .then(mod => ({Vector, calculatePenroseTiling, calculateTrianglesBB} = mod));
+
 function highlightTriNeighbors(selector, coord) {
     const neighbors = d3.range(3).map(i => {
 	return tatham_neighbor_or_null(coord, i);
@@ -157,12 +161,7 @@ function drawPenroseTiling() {
     drawTriangles('svg#gnomon', robinsonTriangles, discardedTriangles.concat(culledTriangles), polygon);
     // svg viewBox distorts things; we want to zoom in without making lines thicker
     // assume svg is wider than tall, and tiles are aspect ratio 1
-    const tl = new Vector(
-	d3.min(robinsonTriangles, tri => d3.min([tri.v1.x, tri.v2.x, tri.v3.x])),
-	d3.min(robinsonTriangles, tri => d3.min([tri.v1.y, tri.v2.y, tri.v3.y])));
-    const br = new Vector(
-	d3.max(robinsonTriangles, tri => d3.max([tri.v1.x, tri.v2.x, tri.v3.x])),
-	d3.max(robinsonTriangles, tri => d3.max([tri.v1.y, tri.v2.y, tri.v3.y])));
+    const {tl, br}  = calculateTrianglesBB(robinsonTriangles);
     const twidth = +d3.select('svg#tiles').nodes()[0].clientWidth,
 	  theight =  +d3.select('svg#tiles').nodes()[0].clientHeight;
     const rwidth = br.x - tl.x, rheight = br.y - tl.y;

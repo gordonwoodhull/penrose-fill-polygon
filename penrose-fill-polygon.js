@@ -45,7 +45,7 @@ var trianglesIntersect = function(A, B) {
 }
 
 // Used to represent both points and vectors for simplicity
-class Vector {
+export class Vector {
     constructor(x, y) {
         this.x = x;
         this.y = y;
@@ -77,7 +77,7 @@ function sign(v1, v2, v3) {
     return (v1.x - v3.x) * (v2.y - v3.y) - (v2.x - v3.x) * (v1.y - v3.y);
 }
 
-class Triangle {
+export class Triangle {
     constructor(v1, v2, v3, coord, fillColor) {
         this.v1 = v1;
         this.v2 = v2;
@@ -100,7 +100,7 @@ class Triangle {
 }
 
 // C
-class TriangleC extends Triangle {
+export class TriangleC extends Triangle {
     constructor(v1, v2, v3, coord) {
         super(v1, v2, v3, coord, 'blue');
     }
@@ -118,7 +118,7 @@ class TriangleC extends Triangle {
 }
 
 // D
-class TriangleD extends Triangle {
+export class TriangleD extends Triangle {
     constructor(v1, v2, v3, coord) {
         super(v1, v2, v3, coord, 'blue');
     }
@@ -136,7 +136,7 @@ class TriangleD extends Triangle {
 }
 
 // X
-class TriangleX extends Triangle {
+export class TriangleX extends Triangle {
     constructor(v1, v2, v3, coord) {
         super(v1, v2, v3, coord, 'red');
     }
@@ -158,7 +158,7 @@ class TriangleX extends Triangle {
 }
 
 // Y
-class TriangleY extends Triangle {
+export class TriangleY extends Triangle {
     constructor(v1, v2, v3, coord) {
         super(v1, v2, v3, coord, 'red');
     }
@@ -179,7 +179,7 @@ class TriangleY extends Triangle {
     }
 }
 
-class Rhombus {
+export class Rhombus {
     constructor(v1, v2, v3, v4, coord, fillColor) {
         this.v1 = v1;
         this.v2 = v2;
@@ -369,11 +369,17 @@ function lighten(color) {
     return color;
 }
 
-function calculateBaseRhombuses() {
+// unit-length edges
+export function calculateBaseRhombuses() {
     const cos36_2 = Math.cos(Math.PI*2/10) / 2,
 	  sin36_2 = Math.sin(Math.PI*2/10) / 2;
     const cos72_2 = Math.cos(Math.PI*2/5) / 2,
 	  sin72_2 = Math.sin(Math.PI*2/5) / 2;
+    // these are the easiest rotations to do the trig
+    //      -------
+    //     /     /
+    //    /     /
+    //   -------
     const rhomb0 = [
 	[0.5 + cos72_2, sin72_2],
 	[cos72_2 - 0.5, sin72_2],
@@ -398,7 +404,17 @@ function calculateBaseRhombuses() {
 }
 let base_rhombuses = calculateBaseRhombuses();
 
-function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile, resolveRagged, center, r) {
+export function calculateTrianglesBB(tris) {
+    const tl = new Vector(
+	d3.min(tris, tri => d3.min([tri.v1.x, tri.v2.x, tri.v3.x])),
+	d3.min(tris, tri => d3.min([tri.v1.y, tri.v2.y, tri.v3.y])));
+    const br = new Vector(
+	d3.max(tris, tri => d3.max([tri.v1.x, tri.v2.x, tri.v3.x])),
+	d3.max(tris, tri => d3.max([tri.v1.y, tri.v2.y, tri.v3.y])));
+    return {tl, br};
+}
+
+export function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile, resolveRagged, center, r) {
     var ratio = Math.sin(36 * (Math.PI / 180)) / Math.sin(54 * (Math.PI / 180));
     var startri = null, hei;
     switch(startTile) {
@@ -552,7 +568,9 @@ function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile,
 	while(cullRhombs.length);
     }
     discarded.concat(culledTris).forEach(tri => tri.fillColor = 'none');
-
+    for(const {rhombus: rh} of Object.values(rhombhash)) {
+    }
+    
     const rray = [];
     for(const {rhombus: rh} of Object.values(rhombhash)) {
         const cx = (rh.v1.x + rh.v3.x) / 2,
