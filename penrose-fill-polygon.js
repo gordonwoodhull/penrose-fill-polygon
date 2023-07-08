@@ -278,7 +278,7 @@ const rtri_entries = {
     }
 }
 
-function tatham_neighbor(coord, side) {
+export function tatham_neighbor(coord, side) {
     if(coord.length < 2)
 	throw new Error("no neighbor");
     const pre2 = coord.slice(0, 2);
@@ -305,7 +305,7 @@ function tatham_neighbor(coord, side) {
     }
 }
 
-function tatham_neighbor_or_null(coord, side) {
+export function tatham_neighbor_or_null(coord, side) {
     try {
         return tatham_neighbor(coord, side)[0];
     }
@@ -412,6 +412,24 @@ export function calculateTrianglesBB(tris) {
 	d3.max(tris, tri => d3.max([tri.v1.x, tri.v2.x, tri.v3.x])),
 	d3.max(tris, tri => d3.max([tri.v1.y, tri.v2.y, tri.v3.y])));
     return {tl, br};
+}
+
+export function calculateRhombusesBB(rhombs) {
+    const tl = new Vector(
+	d3.min(rhombs, rhomb => d3.min([rhomb.v1.x, rhomb.v2.x, rhomb.v3.x, rhomb.v4.x])),
+	d3.min(rhombs, rhomb => d3.min([rhomb.v1.y, rhomb.v2.y, rhomb.v3.y, rhomb.v4.y])));
+    const br = new Vector(
+	d3.max(rhombs, rhomb => d3.max([rhomb.v1.x, rhomb.v2.x, rhomb.v3.x, rhomb.v4.x])),
+	d3.max(rhombs, rhomb => d3.max([rhomb.v1.y, rhomb.v2.y, rhomb.v3.y, rhomb.v4.y])));
+    return {tl, br};
+}
+
+export function scaleVector(tl, scale) {
+    return v => {
+	return new Vector(
+	    (v.x - tl.x) * scale,
+	    (v.y - tl.y) * scale);
+    };
 }
 
 export function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile, resolveRagged, center, r) {
@@ -568,8 +586,25 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
 	while(cullRhombs.length);
     }
     discarded.concat(culledTris).forEach(tri => tri.fillColor = 'none');
+    var elengths = []
+    for(const {rhombus: rh} of Object.values(rhombhash))
+	for(const [v1, v2] of [[rh.v1,rh.v2], [rh.v2,rh.v3], [rh.v3, rh.v4], [rh.v4, rh.v1]])
+	    elengths.push(Math.hypot(v2.x - v1.x, v2.y - v1.y));
+    const meanEdgeLength = d3.mean(elengths);
+    console.log('edge lengths mean', meanEdgeLength, 'stddev', d3.deviation(elengths));
+    const {tl, br} = calculateRhombusesBB(Object.values(rhombhash).map(({rhombus}) => rhombus));
+    const scale = scaleVector(tl, 1/meanEdgeLength);
     for(const {rhombus: rh} of Object.values(rhombhash)) {
+	rh.v1 = scale(rh.v1);
+	rh.v2 = scale(rh.v2);
+	rh.v3 = scale(rh.v3);
+	rh.v4 = scale(rh.v4);
     }
+    elengths = []
+    for(const {rhombus: rh} of Object.values(rhombhash))
+	for(const [v1, v2] of [[rh.v1,rh.v2], [rh.v2,rh.v3], [rh.v3, rh.v4], [rh.v4, rh.v1]])
+	    elengths.push(Math.hypot(v2.x - v1.x, v2.y - v1.y));
+    console.log('edge lengths mean', d3.mean(elengths), 'stddev', d3.deviation(elengths));
     
     const rray = [];
     for(const {rhombus: rh} of Object.values(rhombhash)) {
@@ -625,6 +660,7 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
         culledRhombuses: culledRhombs,
         fillsIdentified: find_tris,
         fillsFound: found_tris,
-	rhombBases: bases
+	rhombBases: bases,
+	scaleFunction: scale
     };
 }

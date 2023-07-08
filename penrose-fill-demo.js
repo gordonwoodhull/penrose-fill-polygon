@@ -1,6 +1,7 @@
-var Vector, calculatePenroseTiling, calculateTrianglesBB;
+var Vector, calculatePenroseTiling, tatham_neighbor_or_null, calculateTrianglesBB, calculateRhombusesBB;
 import('./penrose-fill-polygon.js')
-    .then(mod => ({Vector, calculatePenroseTiling, calculateTrianglesBB} = mod));
+    .then(mod => ({Vector, calculatePenroseTiling, tatham_neighbor_or_null,
+		   calculateTrianglesBB, calculateRhombusesBB} = mod));
 
 function highlightTriNeighbors(selector, coord) {
     const neighbors = d3.range(3).map(i => {
@@ -131,7 +132,7 @@ function drawPenroseTiling() {
         center, r, polygon,
         robinsonTriangles, discardedTriangles, culledTriangles,
         p3Rhombuses, culledRhombuses, fillsIdentified, fillsFound,
-	rhombBases
+	rhombBases, scaleFunction
     } = calculatePenroseTiling(
         +minTiles, width, height, boundsShape, startile, resolve_ragged, fixedCenter, fixedR
     );
@@ -161,7 +162,9 @@ function drawPenroseTiling() {
     drawTriangles('svg#gnomon', robinsonTriangles, discardedTriangles.concat(culledTriangles), polygon);
     // svg viewBox distorts things; we want to zoom in without making lines thicker
     // assume svg is wider than tall, and tiles are aspect ratio 1
-    const {tl, br}  = calculateTrianglesBB(robinsonTriangles);
+    const {tl, br} = drawlevel === 'triangle' ?
+	  calculateTrianglesBB(robinsonTriangles) :
+	  calculateRhombusesBB(Object.values(p3Rhombuses).map(({rhombus}) => rhombus));
     const twidth = +d3.select('svg#tiles').nodes()[0].clientWidth,
 	  theight =  +d3.select('svg#tiles').nodes()[0].clientHeight;
     const rwidth = br.x - tl.x, rheight = br.y - tl.y;
@@ -170,7 +173,7 @@ function drawPenroseTiling() {
     if(drawlevel === 'triangle')
 	drawTriangles('svg#tiles', robinsonTriangles, culledTriangles, polygon, tl, ofs, scale);
     else if(drawlevel === 'rhombus')
-	drawRhombuses('svg#tiles', p3Rhombuses, polygon, tl, ofs, scale);
+	drawRhombuses('svg#tiles', p3Rhombuses, polygon.map(scaleFunction), tl, ofs, scale);
 }
 
 const urlParams = new URLSearchParams(window.location.search);
