@@ -99,23 +99,46 @@ function drawRhombuses(selector, rhombhash, polygon, tl = null, ofs = null, scal
         .attr('d', _ => `M ${polygon[0].print(xform, yform)} ` + polygon.slice(1).map(v => v.print(xform, yform)).join(' ') + ' Z');
 }
 
+function getInputValues() {
+    var minTiles = document.getElementById("minimum").value;
+    var boundsShape = document.querySelector('input[name="init_shape"]:checked').value;
+    var resolveRagged = document.querySelector('input[name="resolve_ragged"]:checked').value;
+    return {minTiles, boundsShape, resolveRagged};
+}
+
+function putInputsInURL() {
+    const inputs = getInputValues();
+    if(inputs.minTiles !== 50)
+        urlParams.set('min', inputs.minTiles);
+    else
+	urlParams.delete('min');
+    if(inputs.boundsShape !== 'square')
+        urlParams.set('shape', inputs.boundsShape);
+    else
+	urlParams.delete('shape');
+    if(inputs.resolveRagged !== 'cull')
+        urlParams.set('ragged', inputs.resolveRagged);
+    else
+	urlParams.delete('ragged');
+}
+
 function fixPolygon(center, r) {
     urlParams.set('center', center.print());
     urlParams.set('r', r.toFixed(4));
+    putInputsInURL();
     window.location.search = urlParams;
 }
 
 function unfixPolygon() {
     urlParams.delete('center');
     urlParams.delete('r');
+    putInputsInURL();
     window.location.search = urlParams;
 }
 
 
 function drawPenroseTiling() {
-    var minTiles = document.getElementById("minimum").value;
-    var boundsShape = document.querySelector('input[name="init_shape"]:checked').value;
-    var resolve_ragged = document.querySelector('input[name="resolve_ragged"]:checked').value;
+    const inputs = getInputValues();
     const width = +d3.select('svg#gnomon').nodes()[0].clientWidth,
           height =  +d3.select('svg#gnomon').nodes()[0].clientHeight;
     let fixedCenter = null, fixedR = null;
@@ -134,7 +157,7 @@ function drawPenroseTiling() {
         p3Rhombuses, culledRhombuses, fillsIdentified, fillsFound,
         rhombBases, scaleFunction
     } = calculatePenroseTiling(
-        +minTiles, width, height, boundsShape, startile, resolve_ragged, fixedCenter, fixedR
+        +inputs.minTiles, width, height, inputs.boundsShape, startile, inputs.resolveRagged, fixedCenter, fixedR
     );
     const dt = performance.now() - startt;
 
@@ -145,10 +168,10 @@ function drawPenroseTiling() {
 `<div>center: ${center.print()}</div>
 <div>r: ${r.toFixed(4)} ${fixLink}
 <div>triangles found: ${robinsonTriangles.length}</div>` +
-            (resolve_ragged === 'cull' ?
+            (inputs.resolveRagged === 'cull' ?
 `<div>triangles culled: ${culledTriangles.length}</div>
 <div>rhombs culled: ${culledRhombuses.length}</div>` :
-             resolve_ragged === 'fill' ?
+             inputs.resolveRagged === 'fill' ?
 `<div>fills identified: ${fillsIdentified.length}</div>
 <div>fills found: ${fillsFound.length}</div>` :
              '') +

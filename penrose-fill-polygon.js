@@ -407,7 +407,7 @@ let base_rhombuses = calculateBaseRhombuses();
 
 export const truncate_float = prec => x => Math.abs(x) < 10 ** -prec ? 0..toFixed(prec) : x.toFixed(prec);
 
-export function rhomb_key(vs, prec = 11) {
+export function rhomb_key(vs, prec = 10) {
     if(vs instanceof Rhombus)
         vs = [vs.v1, vs.v2, vs.v3, vs.v4];
     const trunc = truncate_float(prec);
@@ -495,7 +495,8 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
                 polygon = regularPolygon(center, r, boundsShape);
                 found = polygon.every(pt => startri.pointInside(pt));
             } while(--c_tries && !found);
-            r /= 2;
+            if(!found)
+                r /= 2;
         }
         while(--r_tries && !found)
         if(!r_tries) {
