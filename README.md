@@ -17,6 +17,7 @@ We also use Tatham's [combinatorial coordinates](https://www.chiark.greenend.org
 Finally, we need to coalesce matching triangles into rhombuses, and clean up the border to avoid ragged edges (characterized by gaps and tiles connected by one or less sides). This part of the library is a work in progress. Currently there are two algorithms:
 * `cull` removes any half-rhombs and then repeatedly removes any rhombus which only has one neighbor.
 * `fill` generates the other half of rhombuses when the first half has two neighbors (and we may want to fill whole rhombuses after)
+
 Perhaps the ideal algorithm would minimize the border length / tile count ratio using such primitives.
 
 If you are interested in contributing to this library, help is welcome:
