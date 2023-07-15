@@ -1,3 +1,6 @@
+import {range, cross, min, max, extent, mean, deviation} from 'd3-array';
+import {randomUniform} from 'd3-random';
+
 var GOLDEN_RATIO = 0.6180339887498948482;
 
 
@@ -39,9 +42,13 @@ var cross2 = function(A, B) {
             (sa+ta >= D && sb+tb >= D && sc+tc >= D));
 }
 
-var trianglesIntersect = function(A, B) {
+export var trianglesIntersect = function(A, B) {
     return !(cross2(A, B) ||
              cross2(B, A));
+}
+
+export var triangleListsIntersect = function(As, Bs) {
+    return cross(As, Bs).some(([A, B]) => trianglesIntersect(A, B));
 }
 
 // Used to represent both points and vectors for simplicity
@@ -189,6 +196,12 @@ export class Rhombus {
         this.fillColor = fillColor;
         this.coord = coord;
     }
+    getTriangles() {
+        return [
+            new Triangle(this.v1, this.v2, this.v3),
+            new Triangle(this.v2, this.v3, this.v4)
+        ];
+    }
 }
 
 const rtri_neighbors = {
@@ -331,12 +344,12 @@ const shape_spec = {
 
 function regularPolygon(center, r, shape) {
     const {sides, offset} = shape_spec[shape];
-    const thetas = d3.range(offset || 0, sides, 1).map(v => v * 2 * Math.PI / sides);
+    const thetas = range(offset || 0, sides, 1).map(v => v * 2 * Math.PI / sides);
     return thetas.map(theta => new Vector(Math.cos(theta)*r + center.x, Math.sin(theta)*r + center.y));
 }
 
 function triangulate(polygon) {
-    return d3.range(2, polygon.length).map(i => new Triangle(polygon[0], polygon[i-1], polygon[i], "N/A", "green"));
+    return range(2, polygon.length).map(i => new Triangle(polygon[0], polygon[i-1], polygon[i], "N/A", "green"));
 }
 
 function generateTriangles(triangles, filt, enough) {
@@ -396,7 +409,7 @@ export function calculateBaseRhombuses() {
 
     const rots = [0, TAU/5, TAU*2/5, TAU*3/5, TAU*4/5,
                   TAU*2/10, -TAU/10, -TAU*4/10, TAU*3/10, 0];
-    return d3.range(10)
+    return range(10)
         .map(i => (i < 5 ? rhomb0 : rhomb9).map(({x,y}) =>
             new Vector(
                 x * Math.cos(rots[i]) - y * Math.sin(rots[i]),
@@ -404,6 +417,8 @@ export function calculateBaseRhombuses() {
             )));
 }
 let base_rhombuses = calculateBaseRhombuses();
+
+
 
 export const truncate_float = prec => x => Math.abs(x) < 10 ** -prec ? 0..toFixed(prec) : x.toFixed(prec);
 
@@ -431,21 +446,21 @@ export function rhomb_key(vs, prec = 10) {
 
 export function calculateTrianglesBB(tris) {
     const tl = new Vector(
-        d3.min(tris, tri => d3.min([tri.v1.x, tri.v2.x, tri.v3.x])),
-        d3.min(tris, tri => d3.min([tri.v1.y, tri.v2.y, tri.v3.y])));
+        min(tris, tri => min([tri.v1.x, tri.v2.x, tri.v3.x])),
+        min(tris, tri => min([tri.v1.y, tri.v2.y, tri.v3.y])));
     const br = new Vector(
-        d3.max(tris, tri => d3.max([tri.v1.x, tri.v2.x, tri.v3.x])),
-        d3.max(tris, tri => d3.max([tri.v1.y, tri.v2.y, tri.v3.y])));
+        max(tris, tri => max([tri.v1.x, tri.v2.x, tri.v3.x])),
+        max(tris, tri => max([tri.v1.y, tri.v2.y, tri.v3.y])));
     return {tl, br};
 }
 
 export function calculateRhombusesBB(rhombs) {
     const tl = new Vector(
-        d3.min(rhombs, rhomb => d3.min([rhomb.v1.x, rhomb.v2.x, rhomb.v3.x, rhomb.v4.x])),
-        d3.min(rhombs, rhomb => d3.min([rhomb.v1.y, rhomb.v2.y, rhomb.v3.y, rhomb.v4.y])));
+        min(rhombs, rhomb => min([rhomb.v1.x, rhomb.v2.x, rhomb.v3.x, rhomb.v4.x])),
+        min(rhombs, rhomb => min([rhomb.v1.y, rhomb.v2.y, rhomb.v3.y, rhomb.v4.y])));
     const br = new Vector(
-        d3.max(rhombs, rhomb => d3.max([rhomb.v1.x, rhomb.v2.x, rhomb.v3.x, rhomb.v4.x])),
-        d3.max(rhombs, rhomb => d3.max([rhomb.v1.y, rhomb.v2.y, rhomb.v3.y, rhomb.v4.y])));
+        max(rhombs, rhomb => max([rhomb.v1.x, rhomb.v2.x, rhomb.v3.x, rhomb.v4.x])),
+        max(rhombs, rhomb => max([rhomb.v1.y, rhomb.v2.y, rhomb.v3.y, rhomb.v4.y])));
     return {tl, br};
 }
 
@@ -482,13 +497,13 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
     if(center && r)
         polygon = regularPolygon(center, r, boundsShape);
     else {
-        const [xmin, xmax] = d3.extent([startri.v1.x, startri.v2.x, startri.v3.x]);
-        const [ymin, ymax] = d3.extent([startri.v1.y, startri.v2.y, startri.v3.y]);
-        r = d3.randomUniform(width/1000, width/8)();
+        const [xmin, xmax] = extent([startri.v1.x, startri.v2.x, startri.v3.x]);
+        const [ymin, ymax] = extent([startri.v1.y, startri.v2.y, startri.v3.y]);
+        r = randomUniform(width/1000, width/8)();
         let r_tries = 5, found = false;
         do {
-            let xrand = d3.randomUniform(xmin + r, xmax - r),
-                yrand = d3.randomUniform(ymin + r, ymax - r);
+            let xrand = randomUniform(xmin + r, xmax - r),
+                yrand = randomUniform(ymin + r, ymax - r);
             let c_tries = 10;
             do {
                 center = new Vector(xrand(), yrand());
@@ -601,7 +616,7 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
                     if(!nei)
                         continue;
                     const entry = rhombhash[nei];
-                    for(const i of d3.range(4)) {
+                    for(const i of range(4)) {
                         if(entry.neighbors[i] === rhombus.coord)
                             entry.neighbors[i] = null;
                     }
@@ -616,8 +631,8 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
     for(const {rhombus: rh} of Object.values(rhombhash))
         for(const [v1, v2] of [[rh.v1,rh.v2], [rh.v2,rh.v3], [rh.v3, rh.v4], [rh.v4, rh.v1]])
             elengths.push(Math.hypot(v2.x - v1.x, v2.y - v1.y));
-    const meanEdgeLength = d3.mean(elengths);
-    console.log('edge lengths mean', meanEdgeLength, 'stddev', d3.deviation(elengths));
+    const meanEdgeLength = mean(elengths);
+    console.log('edge lengths mean', meanEdgeLength, 'stddev', deviation(elengths));
     const {tl, br} = calculateRhombusesBB(Object.values(rhombhash).map(({rhombus}) => rhombus));
     const scale = scaleVector(tl, 1/meanEdgeLength);
     for(const {rhombus: rh} of Object.values(rhombhash)) {
@@ -630,7 +645,7 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
     for(const {rhombus: rh} of Object.values(rhombhash))
         for(const [v1, v2] of [[rh.v1,rh.v2], [rh.v2,rh.v3], [rh.v3, rh.v4], [rh.v4, rh.v1]])
             elengths.push(Math.hypot(v2.x - v1.x, v2.y - v1.y));
-    console.log('edge lengths mean', d3.mean(elengths), 'stddev', d3.deviation(elengths));
+    console.log('edge lengths mean', mean(elengths), 'stddev', deviation(elengths));
     
     const rray = [];
     for(const {rhombus: rh} of Object.values(rhombhash)) {
@@ -671,7 +686,7 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
     }
     for(const nf of not_found)
         console.log('not found', nf);
-    for(const base of d3.range(10))
+    for(const base of range(10))
         if(!bases_found.has(base))
             console.log('unused', base_to_key[base]);
     
@@ -685,7 +700,7 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
         culledRhombuses: culledRhombs,
         fillsIdentified: find_tris,
         fillsFound: found_tris,
-        rhombBases: d3.range(10),
+        rhombBases: range(10),
         scaleFunction: scale
     };
 }
