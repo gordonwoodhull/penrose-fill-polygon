@@ -414,11 +414,17 @@ export function calculateBaseRhombuses() {
     const rots = [0, TAU/5, TAU*2/5, TAU*3/5, TAU*4/5,
                   TAU*2/10, -TAU/10, -TAU*4/10, TAU*3/10, 0];
     return range(10)
-        .map(i => (i < 5 ? rhomb0 : rhomb9).map(({x,y}) =>
-            new Vector(
-                x * Math.cos(rots[i]) - y * Math.sin(rots[i]),
-                x * Math.sin(rots[i]) + y * Math.cos(rots[i])
-            )));
+        .map(i => {
+	    // above prototype coords are y increasing upward
+	    // we must flip results and reverse order while still starting at apex
+	    const rhomb = i < 5 ? rhomb0 : rhomb9;
+	    const rv = rhomb.map(({x,y}) =>
+		new Vector(
+                    x * Math.cos(rots[i]) - y * Math.sin(rots[i]),
+                    -(x * Math.sin(rots[i]) + y * Math.cos(rots[i]))
+		));
+	    return [rv[0], rv[3], rv[2], rv[1]];
+	});
 }
 let base_rhombuses = calculateBaseRhombuses();
 
