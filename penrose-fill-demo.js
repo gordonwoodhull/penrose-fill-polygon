@@ -1,7 +1,4 @@
-var Vector, calculatePenroseTiling, tatham_neighbor_or_null, calculateTrianglesBB, calculateRhombusesBB;
-import('./penrose-fill-polygon.js')
-    .then(mod => ({Vector, calculatePenroseTiling, tatham_neighbor_or_null,
-                   calculateTrianglesBB, calculateRhombusesBB} = mod));
+var {Vector, calculatePenroseTiling, tatham_neighbor_or_null, calculateTrianglesBB, calculateRhombusesBB} = penroseFillPolygon;
 
 function highlightTriNeighbors(selector, coord) {
     const neighbors = d3.range(3).map(i => {

@@ -1,0 +1,32 @@
+{
+  "name": "penrose-fill-polygon",
+  "version": "0.5",
+  "license": "Apache-2.0",
+  "copyright": "2023",
+  "description": "Generate random penrose P3 rhombuses to fill a polygon",
+  "keywords": [
+    "penrose",
+    "tiling",
+    "rhombus",
+    "P3",
+    "d3"
+  ],
+  "homepage": "https://gordonwoodhull.github.io/penrose-fill-polygon/penrose.html",
+  "bugs": "https://github.com/gordonwoodhull/penrose-fill-polygon/issues",
+  "author": {
+    "name": "Gordon Woodhull",
+    "url": "http://gordon.woodhull.com/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gordonwoodhull/penrose-fill-polygon.git"
+  },
+  "dependencies": {
+    "d3-array": "^3.2.4",
+    "d3-random": "^3.0.1",
+    "esbuild": "0.18.15"
+  },
+  "scripts": {
+    "build": "esbuild penrose-fill-polygon.js --bundle --global-name=penroseFillPolygon --outfile=penrose-bundle.js"
+  }
+}
