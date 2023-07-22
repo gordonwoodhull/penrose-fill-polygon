@@ -591,10 +591,15 @@ var penroseFillPolygon = (() => {
       TAU * 3 / 10,
       0
     ];
-    return range(10).map((i) => (i < 5 ? rhomb0 : rhomb9).map(({ x, y }) => new Vector(
-      x * Math.cos(rots[i]) - y * Math.sin(rots[i]),
-      x * Math.sin(rots[i]) + y * Math.cos(rots[i])
-    )));
+    return range(20).map((i) => {
+      const rhomb = i % 10 < 5 ? rhomb0 : rhomb9;
+      const rot = i < 10 ? rots[i] : rots[i - 10] + TAU / 2;
+      const rv = rhomb.map(({ x, y }) => new Vector(
+        x * Math.cos(rot) - y * Math.sin(rot),
+        -(x * Math.sin(rot) + y * Math.cos(rot))
+      ));
+      return [rv[0], rv[3], rv[2], rv[1]];
+    });
   }
   var base_rhombuses = calculateBaseRhombuses();
   var truncate_float = (prec) => (x) => Math.abs(x) < 10 ** -prec ? 0 .toFixed(prec) : x.toFixed(prec);
@@ -602,16 +607,6 @@ var penroseFillPolygon = (() => {
     if (vs instanceof Rhombus)
       vs = [vs.v1, vs.v2, vs.v3, vs.v4];
     const trunc = truncate_float(prec);
-    var do_it = false;
-    const at2 = Math.abs(Math.atan2(vs[2].y, vs[2].x)), at0 = Math.abs(Math.atan2(vs[0].y, vs[0].x));
-    if (Math.abs(at2 - at0) < 1e-5) {
-      const at3 = Math.abs(Math.atan2(vs[3].y, vs[3].x)), at1 = Math.abs(Math.atan2(vs[1].y, vs[1].x));
-      if (at3 < at1)
-        do_it = true;
-    } else if (at2 < at0)
-      do_it = true;
-    if (do_it)
-      vs = [...vs.slice(2), ...vs.slice(0, 2)];
     return vs.flatMap((v) => [trunc(v.x), trunc(v.y)]).join(",");
   }
   function calculateTrianglesBB(tris) {
