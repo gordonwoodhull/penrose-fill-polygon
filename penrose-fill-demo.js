@@ -169,8 +169,7 @@ function drawPenroseTiling() {
 `<div>triangles culled: ${culledTriangles.length}</div>
 <div>rhombs culled: ${culledRhombuses.length}</div>` :
              inputs.resolveRagged === 'fill' ?
-`<div>fills identified: ${fillsIdentified.length}</div>
-<div>fills found: ${fillsFound.length}</div>` :
+`<div>fills found: ${fillsFound.length}/${fillsIdentified.length}</div>` :
              '') +
             (showBaseRhombuses ?
              `<div>rhombus bases: ${rhombBases.length}` : '') +

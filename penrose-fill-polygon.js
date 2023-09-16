@@ -549,7 +549,7 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
     if(find_tris.length) {
         [found_tris] = generateTriangles(
             [startri],
-            tri => find_tris.some(find => find.indexOf(tri.coord) === find.length - tri.coord.length),
+            tri => find_tris.some(find => find.endsWith(tri.coord)),
             tris => !tris.length || tris[0].coord.length === find_tris[0].length);
         if(found_tris.length < find_tris.length) {
             console.log('did not find other halves of all sought triangles:');
@@ -628,7 +628,6 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
         for(const [v1, v2] of [[rh.v1,rh.v2], [rh.v2,rh.v3], [rh.v3, rh.v4], [rh.v4, rh.v1]])
             elengths.push(Math.hypot(v2.x - v1.x, v2.y - v1.y));
     const meanEdgeLength = mean(elengths);
-    console.log('edge lengths mean', meanEdgeLength, 'stddev', deviation(elengths));
     const {tl, br} = calculateRhombusesBB(Object.values(rhombhash).map(({rhombus}) => rhombus));
     const scale = scaleVector(tl, 1/meanEdgeLength);
     for(const {rhombus: rh} of Object.values(rhombhash)) {
@@ -641,7 +640,6 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
     for(const {rhombus: rh} of Object.values(rhombhash))
         for(const [v1, v2] of [[rh.v1,rh.v2], [rh.v2,rh.v3], [rh.v3, rh.v4], [rh.v4, rh.v1]])
             elengths.push(Math.hypot(v2.x - v1.x, v2.y - v1.y));
-    console.log('edge lengths mean', mean(elengths), 'stddev', deviation(elengths));
     
     const rray = [];
     for(const {rhombus: rh} of Object.values(rhombhash)) {
