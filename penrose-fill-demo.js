@@ -157,13 +157,16 @@ function drawPenroseTiling() {
         +inputs.minTiles, width, height, inputs.boundsShape, startile, inputs.resolveRagged, fixedCenter, fixedR
     );
     const dt = performance.now() - startt;
-
+    const degree_counts = Object.values(p3Rhombuses).reduce((p, {neighbors}) => (p[neighbors.filter(x => x).length]++, p), new Array(5).fill(0));
+    const total_border = d3.sum(d3.range(4), degree => degree_counts[degree]);
+    const degree_text = d3.range(4).filter(x => degree_counts[x]).map(degree => `<div>border degree ${degree}: ${(degree_counts[degree]/total_border*100).toFixed(0)}%</div>`).join('');
     const fixLink = (!fixedCenter && !fixedR) ?
           '<a id="fix-polygon" href="#">fix</a></div>' :
           '<a id="unfix-polygon" href="#">unfix</a></div>';
     d3.select('#readout').html(
 `<div>center: ${center.print()}</div>
-<div>r: ${r.toFixed(4)} ${fixLink}
+<div>r: ${r.toFixed(4)} ${fixLink}<div>
+<div>rhombuses: ${Object.keys(p3Rhombuses).length}</div>
 <div>triangles found: ${robinsonTriangles.length}</div>` +
             (inputs.resolveRagged === 'cull' ?
 `<div>triangles culled: ${culledTriangles.length}</div>
@@ -171,6 +174,7 @@ function drawPenroseTiling() {
              inputs.resolveRagged === 'fill' ?
 `<div>fills found: ${fillsFound.length}/${fillsIdentified.length}</div>` :
              '') +
+	    degree_text + 
             (showBaseRhombuses ?
              `<div>rhombus bases: ${rhombBases.length}` : '') +
             `<div>calculation time: ${dt.toFixed(1)}ms</div>`);
