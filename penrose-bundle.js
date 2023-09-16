@@ -73,40 +73,6 @@ var penroseFillPolygon = (() => {
     }
   }
 
-  // node_modules/d3-array/src/variance.js
-  function variance(values, valueof) {
-    let count = 0;
-    let delta;
-    let mean2 = 0;
-    let sum = 0;
-    if (valueof === void 0) {
-      for (let value of values) {
-        if (value != null && (value = +value) >= value) {
-          delta = value - mean2;
-          mean2 += delta / ++count;
-          sum += delta * (value - mean2);
-        }
-      }
-    } else {
-      let index = -1;
-      for (let value of values) {
-        if ((value = valueof(value, ++index, values)) != null && (value = +value) >= value) {
-          delta = value - mean2;
-          mean2 += delta / ++count;
-          sum += delta * (value - mean2);
-        }
-      }
-    }
-    if (count > 1)
-      return sum / (count - 1);
-  }
-
-  // node_modules/d3-array/src/deviation.js
-  function deviation(values, valueof) {
-    const v = variance(values, valueof);
-    return v ? Math.sqrt(v) : v;
-  }
-
   // node_modules/d3-array/src/extent.js
   function extent(values, valueof) {
     let min2;
@@ -278,6 +244,9 @@ var penroseFillPolygon = (() => {
     static fromPoints(start, end) {
       return new _Vector(end.x - start.x, end.y - start.y);
     }
+    static fromJson(json) {
+      return new _Vector(json.x, json.y);
+    }
     print(xform, yform, prec = 4) {
       xform = xform || ((x) => x);
       yform = yform || ((y) => y);
@@ -288,6 +257,9 @@ var penroseFillPolygon = (() => {
     }
     add(anotherVector) {
       return new _Vector(this.x + anotherVector.x, this.y + anotherVector.y);
+    }
+    subtract(anotherVector) {
+      return new _Vector(this.x - anotherVector.x, this.y - anotherVector.y);
     }
   };
   function sign(v1, v2, v3) {
@@ -381,9 +353,12 @@ var penroseFillPolygon = (() => {
         new Triangle(this.v3, this.v4, this.v1)
       ];
     }
+    getPoints() {
+      return [this.v1, this.v2, this.v3, this.v4];
+    }
     static fromJson(json) {
       const { v1, v2, v3, v4, coord, fillColor } = json;
-      return new _Rhombus(v1, v2, v3, v4, coord, fillColor);
+      return new _Rhombus(Vector.fromJson(v1), Vector.fromJson(v2), Vector.fromJson(v3), Vector.fromJson(v4), coord, fillColor);
     }
   };
   var rtri_neighbors = {
@@ -716,7 +691,7 @@ var penroseFillPolygon = (() => {
     if (find_tris.length) {
       [found_tris] = generateTriangles(
         [startri],
-        (tri) => find_tris.some((find) => find.indexOf(tri.coord) === find.length - tri.coord.length),
+        (tri) => find_tris.some((find) => find.endsWith(tri.coord)),
         (tris) => !tris.length || tris[0].coord.length === find_tris[0].length
       );
       if (found_tris.length < find_tris.length) {
@@ -792,7 +767,6 @@ var penroseFillPolygon = (() => {
       for (const [v1, v2] of [[rh.v1, rh.v2], [rh.v2, rh.v3], [rh.v3, rh.v4], [rh.v4, rh.v1]])
         elengths.push(Math.hypot(v2.x - v1.x, v2.y - v1.y));
     const meanEdgeLength = mean(elengths);
-    console.log("edge lengths mean", meanEdgeLength, "stddev", deviation(elengths));
     const { tl, br } = calculateRhombusesBB(Object.values(rhombhash).map(({ rhombus }) => rhombus));
     const scale = scaleVector(tl, 1 / meanEdgeLength);
     for (const { rhombus: rh } of Object.values(rhombhash)) {
@@ -805,7 +779,6 @@ var penroseFillPolygon = (() => {
     for (const { rhombus: rh } of Object.values(rhombhash))
       for (const [v1, v2] of [[rh.v1, rh.v2], [rh.v2, rh.v3], [rh.v3, rh.v4], [rh.v4, rh.v1]])
         elengths.push(Math.hypot(v2.x - v1.x, v2.y - v1.y));
-    console.log("edge lengths mean", mean(elengths), "stddev", deviation(elengths));
     const rray = [];
     for (const { rhombus: rh } of Object.values(rhombhash)) {
       const cx = (rh.v1.x + rh.v3.x) / 2, cy = (rh.v1.y + rh.v3.y) / 2, cx2 = (rh.v2.x + rh.v4.x) / 2, cy2 = (rh.v2.y + rh.v4.y) / 2;
