@@ -634,7 +634,7 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
         while(cullRhombs.length);
     }
     discarded.concat(culledTris).forEach(tri => tri.fillColor = 'none');
-    var elengths = []
+    var elengths = [];
     for(const {rhombus: rh} of Object.values(rhombhash))
         for(const [v1, v2] of [[rh.v1,rh.v2], [rh.v2,rh.v3], [rh.v3, rh.v4], [rh.v4, rh.v1]])
             elengths.push(Math.hypot(v2.x - v1.x, v2.y - v1.y));
@@ -647,7 +647,7 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
         rh.v3 = scale(rh.v3);
         rh.v4 = scale(rh.v4);
     }
-    elengths = []
+    elengths = [];
     for(const {rhombus: rh} of Object.values(rhombhash))
         for(const [v1, v2] of [[rh.v1,rh.v2], [rh.v2,rh.v3], [rh.v3, rh.v4], [rh.v4, rh.v1]])
             elengths.push(Math.hypot(v2.x - v1.x, v2.y - v1.y));
@@ -686,7 +686,7 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
         }
         else {
             not_found.add(rhombdef.key);
-            rhombdef.base = null
+            rhombdef.base = null;
         }
     }
     for(const nf of not_found)
