@@ -30,12 +30,14 @@ function drawTriangles(selector, triangles, discarded, polygon, tl = null, ofs =
         .style('fill', tri => tri.fillColor)
         .on('mouseover', (_, d) => highlightTriNeighbors(selector, d.coord));
     if(showIndex) {
+        const maxCoordLen = 9
         d3.select(`${selector} g#triangles`)
             .selectAll('text.robinson').data(triangles.concat(discarded))
             .join('text')
             .attr('class', 'robinson')
             .attr('x', tri => xform((tri.v1.x + tri.v2.x + tri.v3.x) / 3))
             .attr('y', tri => yform((tri.v1.y + tri.v2.y + tri.v3.y) / 3))
+            .style('opacity', ({coord}) => d3.easeCubicOut((maxCoordLen - coord.length)/maxCoordLen))
             .text(tri => tri.coord)
             .on('mouseover', (_, d) => highlightTriNeighbors(selector, d.coord));
     }
@@ -78,16 +80,24 @@ function drawRhombuses(selector, rhombhash, polygon, tl = null, ofs = null, scal
         .style('fill', rhomb => showBaseRhombuses ? categorical_colors[rhombhash[rhomb.coord].base] : rhomb.fillColor)
         .on('mouseover', (_, d) => highlightRhombNeighbors(selector, rhombhash, d.coord))
         .on('mouseout', () => highlightRhombNeighbors(selector, rhombhash, null));
-    if(showIndex || showBaseRhombuses) {
+    if(showBaseRhombuses) {
         d3.select(`${selector} g#rhombuses`)
             .selectAll('text.robinson').data(rhombuses)
             .join('text')
             .attr('class', 'robinson')
             .attr('x', rhomb => xform((rhomb.v1.x + rhomb.v2.x + rhomb.v3.x + rhomb.v4.x) / 4))
             .attr('y', rhomb => yform((rhomb.v1.y + rhomb.v2.y + rhomb.v3.y + rhomb.v4.y) / 4))
-            .text(rhomb => showIndex ? rhomb.coord.split(',').map(s => s.slice(0, showIndex)).join(',') : rhombhash[rhomb.coord].base)
-            .on('mouseover', (_, d) => highlightRhombNeighbors(selector, rhombhash, d.coord))
-            .on('mouseout', () => highlightRhombNeighbors(selector, rhombhash, null));
+            .text(rhomb => showIndex ? rhomb.coord.split(',').map(s => s.slice(0, showIndex)).join(',') : rhombhash[rhomb.coord].base)    
+    }
+    if(showIndex) {
+        const triangles = Object.values(rhombhash).flatMap(({tri1, tri2}) => [tri1, tri2]);
+        d3.select(`${selector} g#tricoord`)
+            .selectAll('text.robinson').data(triangles)
+            .join('text')
+            .attr('class', 'robinson')
+            .attr('x', tri => xform((tri.v1.x + tri.v2.x + tri.v3.x) / 3))
+            .attr('y', tri => yform((tri.v1.y + tri.v2.y + tri.v3.y) / 3))
+            .text(tri => tri.coord.slice(0, showIndex));
     }
     d3.select(`${selector} g#polygon`)
         .selectAll('path.polygon').data([0])
@@ -108,15 +118,15 @@ function putInputsInURL() {
     if(inputs.minTiles !== 50)
         urlParams.set('min', inputs.minTiles);
     else
-	urlParams.delete('min');
+        urlParams.delete('min');
     if(inputs.boundsShape !== 'square')
         urlParams.set('shape', inputs.boundsShape);
     else
-	urlParams.delete('shape');
+        urlParams.delete('shape');
     if(inputs.resolveRagged !== 'cull')
         urlParams.set('ragged', inputs.resolveRagged);
     else
-	urlParams.delete('ragged');
+        urlParams.delete('ragged');
 }
 
 function fixPolygon(center, r) {
@@ -174,7 +184,7 @@ function drawPenroseTiling() {
              inputs.resolveRagged === 'fill' ?
 `<div>fills found: ${fillsFound.length}/${fillsIdentified.length}</div>` :
              '') +
-	    degree_text + 
+            degree_text + 
             (showBaseRhombuses ?
              `<div>rhombus bases: ${rhombBases.length}` : '') +
             `<div>calculation time: ${dt.toFixed(1)}ms</div>`);
