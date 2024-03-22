@@ -30,7 +30,7 @@ function drawTriangles(selector, triangles, discarded, polygon, tl = null, ofs =
         .style('fill', tri => tri.fillColor)
         .on('mouseover', (_, d) => highlightTriNeighbors(selector, d.coord));
     if(showIndex) {
-        const maxCoordLen = 9
+        const maxCoordLen = 9;
         d3.select(`${selector} g#triangles`)
             .selectAll('text.robinson').data(triangles.concat(discarded))
             .join('text')
@@ -90,7 +90,7 @@ function drawRhombuses(selector, rhombhash, polygon, tl = null, ofs = null, scal
             .text(rhomb => showIndex ? rhomb.coord.split(',').map(s => s.slice(0, showIndex)).join(',') : rhombhash[rhomb.coord].base)    
     }
     if(showIndex) {
-        const triangles = Object.values(rhombhash).flatMap(({tri1, tri2}) => [tri1, tri2]);
+        const triangles = Object.values(rhombhash).flatMap(({tri1scale, tri2scale}) => [tri1scale, tri2scale]);
         d3.select(`${selector} g#tricoord`)
             .selectAll('text.robinson').data(triangles)
             .join('text')

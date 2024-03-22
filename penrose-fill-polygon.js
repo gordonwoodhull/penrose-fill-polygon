@@ -641,19 +641,26 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
     const meanEdgeLength = mean(elengths);
     const {tl, br} = calculateRhombusesBB(Object.values(rhombhash).map(({rhombus}) => rhombus));
     const scale = scaleVector(tl, 1/meanEdgeLength);
-    for(const {rhombus: rh, tri1, tri2} of Object.values(rhombhash)) {
+    for(const rhombus of Object.values(rhombhash)) {
+        const {rhombus: rh, tri1, tri2} = rhombus;
         rh.v1 = scale(rh.v1);
         rh.v2 = scale(rh.v2);
         rh.v3 = scale(rh.v3);
         rh.v4 = scale(rh.v4);
 
-        tri1.v1 = scale(tri1.v1);
-        tri1.v2 = scale(tri1.v2);
-        tri1.v3 = scale(tri1.v3);
+        rhombus.tri1scale = new Triangle(
+            scale(tri1.v1),
+            scale(tri1.v2),
+            scale(tri1.v3),
+            tri1.coord
+        );
 
-        tri2.v1 = scale(tri2.v1);
-        tri2.v2 = scale(tri2.v2);
-        tri2.v3 = scale(tri2.v3);
+        rhombus.tri2scale = new Triangle(
+            scale(tri2.v1),
+            scale(tri2.v2),
+            scale(tri2.v3),
+            tri2.coord
+        );
     }
     elengths = [];
     for(const {rhombus: rh} of Object.values(rhombhash))
