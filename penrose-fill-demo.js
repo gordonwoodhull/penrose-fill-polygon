@@ -85,7 +85,7 @@ function drawRhombuses(selector, rhombhash, polygon, tl = null, ofs = null, scal
             .attr('class', 'robinson')
             .attr('x', rhomb => xform((rhomb.v1.x + rhomb.v2.x + rhomb.v3.x + rhomb.v4.x) / 4))
             .attr('y', rhomb => yform((rhomb.v1.y + rhomb.v2.y + rhomb.v3.y + rhomb.v4.y) / 4))
-            .text(rhomb => showIndex ? rhomb.coord : rhombhash[rhomb.coord].base)
+            .text(rhomb => showIndex ? rhomb.coord.split(',').map(s => s.slice(0, showIndex)).join(',') : rhombhash[rhomb.coord].base)
             .on('mouseover', (_, d) => highlightRhombNeighbors(selector, rhombhash, d.coord))
             .on('mouseout', () => highlightRhombNeighbors(selector, rhombhash, null));
     }
@@ -204,7 +204,18 @@ const mint = urlParams.get('min');
 const shape = urlParams.get('shape');
 const ragged = urlParams.get('ragged');
 const startile = urlParams.get('tile')?.toUpperCase() || 'X';
-const showIndex = urlParams.get('coord') !== null;
+let showIndex = urlParams.get('coord');
+if(showIndex !== null) {
+    if(['true', ''].includes(showIndex.toLowerCase()))
+        showIndex = 3;
+    else if('false' === showIndex.toLowerCase())
+        showIndex = null;
+    else { 
+        showIndex = +showIndex;
+        if(showIndex !== showIndex)
+            showIndex = null;
+    }
+}
 const showBaseRhombuses = urlParams.get('base') !== null; // not a good name
 const drawlevel = urlParams.get('draw') || 'rhombus';
 const urlCenter = urlParams.get('center') || null;
