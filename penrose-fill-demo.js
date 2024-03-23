@@ -89,7 +89,7 @@ function drawRhombuses(selector, rhombhash, polygon, tl = null, ofs = null, scal
             .attr('y', rhomb => yform((rhomb.v1.y + rhomb.v2.y + rhomb.v3.y + rhomb.v4.y) / 4))
             .text(rhomb => showIndex ? rhomb.coord.split(',').map(s => s.slice(0, showIndex)).join(',') : rhombhash[rhomb.coord].base)    
     }
-    if(showIndex) {
+    if(showIndex || showSides) {
         const calc_center = tri => average_vectors((tri.v1.x + tri.v2.x + tri.v3.x) / 3)
         const triangles = Object.values(rhombhash).flatMap(({tri1scale, tri2scale}) => [
             {
@@ -101,34 +101,37 @@ function drawRhombuses(selector, rhombhash, polygon, tl = null, ofs = null, scal
                 center: tri2scale.center()
             }
         ]);
-        const sides = triangles.flatMap(({tri, center}) => d3.range(3).map(i => {
-            const midpoint = average_vectors(...tri.side(i)),
-                point = interpolate_vectors(center, midpoint, 0.7)
-                return {point, label: i};
-        }));
-        d3.select(`${selector} g#tricoord`)
-            .selectAll('path.split').data(rhombuses)
-            .join('path')
-            .attr('class', 'split')
-            .attr('d', ({v2, v4}) => `M${xform(v4.x)},${yform(v4.y)} L${xform(v2.x)},${yform(v2.y)}`)
-            .style('stroke', 'black')
-            .style('stroke-width', '0.5px')
-            .style('opacity', 0.25);
-
-        d3.select(`${selector} g#tricoord`)
+        if(showIndex) {
+            d3.select(`${selector} g#tricoord`)
             .selectAll('text.robinson').data(triangles)
             .join('text')
             .attr('class', 'robinson')
             .attr('x', ({center}) => xform(center.x))
             .attr('y', ({center}) => yform(center.y))
             .text(({tri}) => tri.coord.slice(0, showIndex));
-        d3.select(`${selector} g#tricoord`)
-            .selectAll('text.side').data(sides)
-            .join('text')
-            .attr('class', 'side')
-            .attr('x', ({point}) => xform(point.x))
-            .attr('y', ({point}) => yform(point.y))
-            .text(({label}) => label);
+        }
+        if(showSides === 'tri') {
+            const sides = triangles.flatMap(({tri, center}) => d3.range(3).map(i => {
+                const midpoint = average_vectors(...tri.side(i)),
+                    point = interpolate_vectors(center, midpoint, 0.7)
+                    return {point, label: i};
+            }));
+            d3.select(`${selector} g#tricoord`)
+                .selectAll('path.split').data(rhombuses)
+                .join('path')
+                .attr('class', 'split')
+                .attr('d', ({v2, v4}) => `M${xform(v4.x)},${yform(v4.y)} L${xform(v2.x)},${yform(v2.y)}`)
+                .style('stroke', 'black')
+                .style('stroke-width', '0.5px')
+                .style('opacity', 0.25);
+            d3.select(`${selector} g#tricoord`)
+                .selectAll('text.side').data(sides)
+                .join('text')
+                .attr('class', 'side')
+                .attr('x', ({point}) => xform(point.x))
+                .attr('y', ({point}) => yform(point.y))
+                .text(({label}) => label);
+        }
     }
     d3.select(`${selector} g#polygon`)
         .selectAll('path.polygon').data([0])
@@ -248,7 +251,7 @@ const startile = urlParams.get('tile')?.toUpperCase() || 'X';
 let showIndex = urlParams.get('coord');
 if(showIndex !== null) {
     if(['true', ''].includes(showIndex.toLowerCase()))
-        showIndex = 3;
+        showIndex = 2; // the level shown in Tatham's diagrams
     else if('false' === showIndex.toLowerCase())
         showIndex = null;
     else { 
@@ -256,6 +259,11 @@ if(showIndex !== null) {
         if(showIndex !== showIndex)
             showIndex = null;
     }
+}
+let showSides = urlParams.get('side');
+if(showSides !== null) {
+    if(showSides !== 'tri')
+        showSides = 'rhomb';
 }
 const showBaseRhombuses = urlParams.get('base') !== null; // not a good name
 const drawlevel = urlParams.get('draw') || 'rhombus';
