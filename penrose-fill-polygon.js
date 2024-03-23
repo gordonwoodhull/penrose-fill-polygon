@@ -85,6 +85,20 @@ export class Vector {
     }
 }
 
+export function average_vectors(...vs) {
+    return new Vector(
+        d3.sum(vs, ({x}) => x)/vs.length,
+        d3.sum(vs, ({y}) => y)/vs.length
+    );
+}
+
+export function interpolate_vectors(a, b, t) {
+    return new Vector(
+        d3.interpolateNumber(a.x, b.x)(t),
+        d3.interpolateNumber(a.y, b.y)(t),
+    )
+}
+
 // adapted from
 // https://stackoverflow.com/questions/2049582/how-to-determine-if-a-point-is-in-a-2d-triangle/2049593#2049593
 
@@ -111,6 +125,17 @@ export class Triangle {
         const has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
 
         return !(has_neg && has_pos);
+    }
+
+    center() {
+        return average_vectors(this.v1, this.v2, this.v3);
+    }
+
+    side(i) {
+        return i === 0 ? [this.v2, this.v3] :
+            i === 1 ? [this.v1, this.v2] :
+            i === 2 ? [this.v3, this.v1] :
+            null;
     }
 }
 

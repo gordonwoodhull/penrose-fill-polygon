@@ -1,4 +1,4 @@
-var {Vector, calculatePenroseTiling, tatham_neighbor_or_null, calculateTrianglesBB, calculateRhombusesBB} = penroseFillPolygon;
+var {Vector, average_vectors, interpolate_vectors, calculatePenroseTiling, tatham_neighbor_or_null, calculateTrianglesBB, calculateRhombusesBB} = penroseFillPolygon;
 
 function highlightTriNeighbors(selector, coord) {
     const neighbors = d3.range(3).map(i => {
@@ -90,14 +90,45 @@ function drawRhombuses(selector, rhombhash, polygon, tl = null, ofs = null, scal
             .text(rhomb => showIndex ? rhomb.coord.split(',').map(s => s.slice(0, showIndex)).join(',') : rhombhash[rhomb.coord].base)    
     }
     if(showIndex) {
-        const triangles = Object.values(rhombhash).flatMap(({tri1scale, tri2scale}) => [tri1scale, tri2scale]);
+        const calc_center = tri => average_vectors((tri.v1.x + tri.v2.x + tri.v3.x) / 3)
+        const triangles = Object.values(rhombhash).flatMap(({tri1scale, tri2scale}) => [
+            {
+                tri: tri1scale,
+                center: tri1scale.center()
+            },
+            {
+                tri: tri2scale,
+                center: tri2scale.center()
+            }
+        ]);
+        const sides = triangles.flatMap(({tri, center}) => d3.range(3).map(i => {
+            const midpoint = average_vectors(...tri.side(i)),
+                point = interpolate_vectors(center, midpoint, 0.7)
+                return {point, label: i};
+        }));
+        d3.select(`${selector} g#tricoord`)
+            .selectAll('path.split').data(rhombuses)
+            .join('path')
+            .attr('class', 'split')
+            .attr('d', ({v2, v4}) => `M${xform(v4.x)},${yform(v4.y)} L${xform(v2.x)},${yform(v2.y)}`)
+            .style('stroke', 'black')
+            .style('stroke-width', '0.5px')
+            .style('opacity', 0.25);
+
         d3.select(`${selector} g#tricoord`)
             .selectAll('text.robinson').data(triangles)
             .join('text')
             .attr('class', 'robinson')
-            .attr('x', tri => xform((tri.v1.x + tri.v2.x + tri.v3.x) / 3))
-            .attr('y', tri => yform((tri.v1.y + tri.v2.y + tri.v3.y) / 3))
-            .text(tri => tri.coord.slice(0, showIndex));
+            .attr('x', ({center}) => xform(center.x))
+            .attr('y', ({center}) => yform(center.y))
+            .text(({tri}) => tri.coord.slice(0, showIndex));
+        d3.select(`${selector} g#tricoord`)
+            .selectAll('text.side').data(sides)
+            .join('text')
+            .attr('class', 'side')
+            .attr('x', ({point}) => xform(point.x))
+            .attr('y', ({point}) => yform(point.y))
+            .text(({label}) => label);
     }
     d3.select(`${selector} g#polygon`)
         .selectAll('path.polygon').data([0])
