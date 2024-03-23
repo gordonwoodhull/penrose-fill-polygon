@@ -27,10 +27,12 @@ var penroseFillPolygon = (() => {
     TriangleX: () => TriangleX,
     TriangleY: () => TriangleY,
     Vector: () => Vector,
+    average_vectors: () => average_vectors,
     calculateBaseRhombuses: () => calculateBaseRhombuses,
     calculatePenroseTiling: () => calculatePenroseTiling,
     calculateRhombusesBB: () => calculateRhombusesBB,
     calculateTrianglesBB: () => calculateTrianglesBB,
+    interpolate_vectors: () => interpolate_vectors,
     rhomb_key: () => rhomb_key,
     scaleVector: () => scaleVector,
     tatham_neighbor: () => tatham_neighbor,
@@ -262,6 +264,18 @@ var penroseFillPolygon = (() => {
       return new _Vector(this.x - anotherVector.x, this.y - anotherVector.y);
     }
   };
+  function average_vectors(...vs) {
+    return new Vector(
+      d3.sum(vs, ({ x }) => x) / vs.length,
+      d3.sum(vs, ({ y }) => y) / vs.length
+    );
+  }
+  function interpolate_vectors(a, b, t) {
+    return new Vector(
+      d3.interpolateNumber(a.x, b.x)(t),
+      d3.interpolateNumber(a.y, b.y)(t)
+    );
+  }
   function sign(v1, v2, v3) {
     return (v1.x - v3.x) * (v2.y - v3.y) - (v2.x - v3.x) * (v1.y - v3.y);
   }
@@ -274,10 +288,16 @@ var penroseFillPolygon = (() => {
       this.coord = coord;
     }
     pointInside(pt) {
-      const d1 = sign(pt, this.v1, this.v2), d2 = sign(pt, this.v2, this.v3), d3 = sign(pt, this.v3, this.v1);
-      const has_neg = d1 < 0 || d2 < 0 || d3 < 0;
-      const has_pos = d1 > 0 || d2 > 0 || d3 > 0;
+      const d1 = sign(pt, this.v1, this.v2), d2 = sign(pt, this.v2, this.v3), d32 = sign(pt, this.v3, this.v1);
+      const has_neg = d1 < 0 || d2 < 0 || d32 < 0;
+      const has_pos = d1 > 0 || d2 > 0 || d32 > 0;
       return !(has_neg && has_pos);
+    }
+    center() {
+      return average_vectors(this.v1, this.v2, this.v3);
+    }
+    side(i) {
+      return i === 0 ? [this.v2, this.v3] : i === 1 ? [this.v1, this.v2] : i === 2 ? [this.v3, this.v1] : null;
     }
   };
   var TriangleC = class _TriangleC extends Triangle {
@@ -355,6 +375,9 @@ var penroseFillPolygon = (() => {
     }
     getPoints() {
       return [this.v1, this.v2, this.v3, this.v4];
+    }
+    side(i) {
+      return i === 0 ? [this.v1, this.v2] : i === 1 ? [this.v2, this.v3] : i === 2 ? [this.v3, this.v4] : i === 3 ? [this.v4, this.v1] : null;
     }
     static fromJson(json) {
       const { v1, v2, v3, v4, coord, fillColor } = json;
@@ -769,17 +792,24 @@ var penroseFillPolygon = (() => {
     const meanEdgeLength = mean(elengths);
     const { tl, br } = calculateRhombusesBB(Object.values(rhombhash).map(({ rhombus }) => rhombus));
     const scale = scaleVector(tl, 1 / meanEdgeLength);
-    for (const { rhombus: rh, tri1, tri2 } of Object.values(rhombhash)) {
+    for (const rhombus of Object.values(rhombhash)) {
+      const { rhombus: rh, tri1, tri2 } = rhombus;
       rh.v1 = scale(rh.v1);
       rh.v2 = scale(rh.v2);
       rh.v3 = scale(rh.v3);
       rh.v4 = scale(rh.v4);
-      tri1.v1 = scale(tri1.v1);
-      tri1.v2 = scale(tri1.v2);
-      tri1.v3 = scale(tri1.v3);
-      tri2.v1 = scale(tri2.v1);
-      tri2.v2 = scale(tri2.v2);
-      tri2.v3 = scale(tri2.v3);
+      rhombus.tri1scale = new Triangle(
+        scale(tri1.v1),
+        scale(tri1.v2),
+        scale(tri1.v3),
+        tri1.coord
+      );
+      rhombus.tri2scale = new Triangle(
+        scale(tri2.v1),
+        scale(tri2.v2),
+        scale(tri2.v3),
+        tri2.coord
+      );
     }
     elengths = [];
     for (const { rhombus: rh } of Object.values(rhombhash))
