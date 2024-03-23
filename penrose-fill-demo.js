@@ -87,7 +87,7 @@ function drawRhombuses(selector, rhombhash, polygon, tl = null, ofs = null, scal
             .attr('class', 'robinson')
             .attr('x', rhomb => xform((rhomb.v1.x + rhomb.v2.x + rhomb.v3.x + rhomb.v4.x) / 4))
             .attr('y', rhomb => yform((rhomb.v1.y + rhomb.v2.y + rhomb.v3.y + rhomb.v4.y) / 4))
-            .text(rhomb => showIndex ? rhomb.coord.split(',').map(s => s.slice(0, showIndex)).join(',') : rhombhash[rhomb.coord].base)    
+            .text(rhomb => rhombhash[rhomb.coord].base);
     }
     if(showIndex || showSides) {
         const calc_center = tri => average_vectors((tri.v1.x + tri.v2.x + tri.v3.x) / 3)
@@ -102,7 +102,7 @@ function drawRhombuses(selector, rhombhash, polygon, tl = null, ofs = null, scal
             }
         ]);
         if(showIndex) {
-            d3.select(`${selector} g#tricoord`)
+            d3.select(`${selector} g#coord`)
             .selectAll('text.robinson').data(triangles)
             .join('text')
             .attr('class', 'robinson')
@@ -116,7 +116,7 @@ function drawRhombuses(selector, rhombhash, polygon, tl = null, ofs = null, scal
                     point = interpolate_vectors(center, midpoint, 0.7)
                     return {point, label: i};
             }));
-            d3.select(`${selector} g#tricoord`)
+            d3.select(`${selector} g#coord`)
                 .selectAll('path.split').data(rhombuses)
                 .join('path')
                 .attr('class', 'split')
@@ -124,7 +124,24 @@ function drawRhombuses(selector, rhombhash, polygon, tl = null, ofs = null, scal
                 .style('stroke', 'black')
                 .style('stroke-width', '0.5px')
                 .style('opacity', 0.25);
-            d3.select(`${selector} g#tricoord`)
+            d3.select(`${selector} g#coord`)
+                .selectAll('text.side').data(sides)
+                .join('text')
+                .attr('class', 'side')
+                .attr('x', ({point}) => xform(point.x))
+                .attr('y', ({point}) => yform(point.y))
+                .text(({label}) => label);
+        }
+        else if(showSides === 'rhomb') {
+            const sides = rhombuses.flatMap(rhomb => {
+                const center = average_vectors(rhomb.v1, rhomb.v3);
+                return d3.range(4).map(i => {
+                    const midpoint = average_vectors(...rhomb.side(i)),
+                        point = interpolate_vectors(center, midpoint, 0.8)
+                        return {point, label: i};
+                });
+            });
+            d3.select(`${selector} g#coord`)
                 .selectAll('text.side').data(sides)
                 .join('text')
                 .attr('class', 'side')

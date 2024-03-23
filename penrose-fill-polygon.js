@@ -238,6 +238,13 @@ export class Rhombus {
     getPoints() {
         return [this.v1, this.v2, this.v3, this.v4];
     }
+    side(i) {
+        return i === 0 ? [this.v1, this.v2] :
+            i === 1 ? [this.v2, this.v3] :
+            i === 2 ? [this.v3, this.v4] :
+            i === 3 ? [this.v4, this.v1] :
+            null;
+    }
     static fromJson(json) {
         const {v1, v2, v3, v4, coord, fillColor} = json;
         return new Rhombus(Vector.fromJson(v1), Vector.fromJson(v2), Vector.fromJson(v3), Vector.fromJson(v4), coord, fillColor);
