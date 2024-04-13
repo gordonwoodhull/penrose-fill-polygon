@@ -105,7 +105,7 @@ function drawRhombuses(selector, rhombhash, polygon, tl = null, ofs = null, scal
             d3.select(`${selector} g#coord`)
             .selectAll('text.robinson').data(triangles)
             .join('text')
-            .attr('class', 'robinson')
+            .attr('class', ({tri}) => 'robinson ' + tri.coord.slice(0,1))
             .attr('x', ({center}) => xform(center.x))
             .attr('y', ({center}) => yform(center.y))
             .text(({tri}) => tri.coord.slice(0, showIndex));
@@ -113,8 +113,8 @@ function drawRhombuses(selector, rhombhash, polygon, tl = null, ofs = null, scal
         if(showSides === 'tri') {
             const sides = triangles.flatMap(({tri, center}) => d3.range(3).map(i => {
                 const midpoint = average_vectors(...tri.side(i)),
-                    point = interpolate_vectors(center, midpoint, 0.7)
-                    return {point, label: i};
+                    point = interpolate_vectors(center, midpoint, 0.7);
+                    return {coord: tri.coord, point, label: i};
             }));
             d3.select(`${selector} g#coord`)
                 .selectAll('path.split').data(rhombuses)
@@ -127,7 +127,7 @@ function drawRhombuses(selector, rhombhash, polygon, tl = null, ofs = null, scal
             d3.select(`${selector} g#coord`)
                 .selectAll('text.side').data(sides)
                 .join('text')
-                .attr('class', 'side')
+                .attr('class', ({coord}) => 'side ' + coord.slice(0,1))
                 .attr('x', ({point}) => xform(point.x))
                 .attr('y', ({point}) => yform(point.y))
                 .text(({label}) => label);
