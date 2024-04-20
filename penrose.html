@@ -73,54 +73,25 @@
 			svg#tiles text.robinson.C, svg#tiles text.robinson.D, svg#tiles text.side.C, svg#tiles text.side.D {
                 fill: #baa;
             }
-            svg text.over {
-                font-size: 12;
-                font-weight: heavy;
-            }
-            svg text.side0 {
-                fill: green;
-            }
-            svg text.side1 {
-                fill: darkorange;
-            }
-            svg text.side2 {
-                fill: darkviolet;
-            }
-            svg text.side3 {
-                fill: #e7298a;
+            svg#tiles text.robinson.over, svg#tiles text.robinson.side0, svg#tiles text.robinson.side2, svg#tiles text.robinson.side3,
+            /* svg#tiles text.side.highlight */
+             {
+                fill: black;
             }
             svg path.over {
-                stroke-width: 0;
                 fill-opacity: .2;
-                z-index: 100;
             }
             svg path.side0 {
-                stroke: green;
-                stroke-width: 4px;
-                fill-opacity: .5;
-                stroke-linejoin: bevel;
-                z-index: 99;
+                fill: green !important;
             }
             svg path.side1 {
-                stroke: #d60;
-                stroke-width: 4px;
-                fill-opacity: .5;
-                stroke-linejoin: bevel;
-                z-index: 98;
+                fill: #d60 !important;
             }
             svg path.side2 {
-                stroke: darkviolet;
-                stroke-width: 4px;
-                fill-opacity: .5;
-                stroke-linejoin: bevel;
-                z-index: 97;
+                fill: darkviolet !important;
             }
             svg path.side3 {
-                stroke: #e7298a;
-                stroke-width: 4px;
-                fill-opacity: .5;
-                stroke-linejoin: bevel;
-                z-index: 96;
+                fill: #e7298a !important;
             }
         </style>
         <script src="d3.v7.min.js"></script>
