@@ -613,6 +613,22 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
             if(rhombhash[rhombcoord])
                 continue;
             else {
+                // things that are arbitrary / not thought out here
+                // original triangles are not using tatham side convention (see ll134-8)
+                // there are two ways to choose the points from the triangles
+                // this code is not using the sorted order of the triangles
+                // that is used for the rhombcoord above
+
+                // right away right here we need to
+                //   * calculate the base and flip
+                //   * rationalize the triangle
+                //   * pull correct sides from triangles for base and flip
+                // there can be tables that say from this base, flip, and rhomb side
+                // you will get tri 1 or 2 and side 1 or 2
+                // below neighbor calc use same
+                // scale is unaffected
+                // or since scale is needed for key and base/flip, maybe calculate everything at once here
+
                 tri2rhomb[t.coord] = rhombcoord;
                 tri2rhomb[oh] = rhombcoord;
                 const fillColor = (find_tris.includes(t.coord) || find_tris.includes(oh)) ?
@@ -666,7 +682,7 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
         while(cullRhombs.length);
     }
     discarded.concat(culledTris).forEach(tri => tri.fillColor = 'none');
-    var elengths = [];
+    const elengths = [];
     for(const {rhombus: rh} of Object.values(rhombhash))
         for(const [v1, v2] of [[rh.v1,rh.v2], [rh.v2,rh.v3], [rh.v3, rh.v4], [rh.v4, rh.v1]])
             elengths.push(Math.hypot(v2.x - v1.x, v2.y - v1.y));
@@ -694,18 +710,13 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
             tri2.coord
         );
     }
-    elengths = [];
-    for(const {rhombus: rh} of Object.values(rhombhash))
-        for(const [v1, v2] of [[rh.v1,rh.v2], [rh.v2,rh.v3], [rh.v3, rh.v4], [rh.v4, rh.v1]])
-            elengths.push(Math.hypot(v2.x - v1.x, v2.y - v1.y));
-    
     const rray = [];
     for(const {rhombus: rh} of Object.values(rhombhash)) {
         const cx = (rh.v1.x + rh.v3.x) / 2,
               cy = (rh.v1.y + rh.v3.y) / 2,
               cx2 = (rh.v2.x + rh.v4.x) / 2,
               cy2 = (rh.v2.y + rh.v4.y) / 2;
-        console.assert(Math.abs(cx - cx2) < 1);
+        console.assert(Math.abs(cx - cx2) < 1); // this seems incredibly loose if the rhombs are already scaled
         console.assert(Math.abs(cy - cy2) < 1);
         rhombhash[rh.coord].center = new Vector(cx, cy);
         var vs = [
