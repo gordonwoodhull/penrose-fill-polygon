@@ -3,6 +3,7 @@ import {
     calculatePenroseTiling,
     Vector
 } from '../penrose-fill-polygon.js';
+import {normalizeNeighborOrdering} from './neighbor-normalizer.js';
 
 const deterministicPenrose = () =>
     calculatePenroseTiling(
@@ -52,5 +53,27 @@ describe('calculatePenroseTiling (start tile X)', () => {
         expect(rhomb.base).toBe(3);
         expect(rhomb.center.x).toBeCloseTo(2.3680339887498847, 12);
         expect(rhomb.center.y).toBeCloseTo(9.777957507529727, 12);
+    });
+
+    it('matches client neighbor ordering after normalization', () => {
+        const coordThick = 'CXDDDDDYCX,DDDDDDDYCX';
+        const coordThin = 'XXDDDDDYCX,YYXDDDDYCX';
+        const normalized = normalizeNeighborOrdering(rhombs);
+
+        expect(normalized[coordThick].neighbors).toEqual([
+            'CCXDDDDYCX,DYXDDDDYCX',
+            'XDDDDDDYCX,YCCXDDDYCX',
+            'XYCCXDDYCX,YXDDDDDYCX',
+            'XXDDDDDYCX,YYXDDDDYCX'
+        ]);
+        expect(normalized[coordThick].base).toBe(17);
+
+        expect(normalized[coordThin].neighbors).toEqual([
+            null,
+            null,
+            'CCXDDDDYCX,DYXDDDDYCX',
+            'CXDDDDDYCX,DDDDDDDYCX'
+        ]);
+        expect(normalized[coordThin].base).toBe(3);
     });
 });

@@ -1,5 +1,6 @@
 import {describe, it, expect} from 'vitest';
 import {calculatePenroseTiling, Vector} from '../penrose-fill-polygon.js';
+import {normalizeNeighborOrdering} from './neighbor-normalizer.js';
 
 const generate = () =>
     calculatePenroseTiling(
@@ -60,5 +61,27 @@ describe('calculatePenroseTiling (start tile D)', () => {
         expect(rhomb.base).toBeNull();
         expect(rhomb.center.x).toBeCloseTo(9.505919864369021, 12);
         expect(rhomb.center.y).toBeCloseTo(4.834518534492529, 12);
+    });
+
+    it('matches client neighbor ordering after normalization', () => {
+        const normalized = normalizeNeighborOrdering(rhombs);
+        const thick = normalized['XDYYXYYYXD,YYYYXYYYXD'];
+        const thin = normalized['XXDYXYYYXD,YYXYXYYYXD'];
+
+        expect(thick.neighbors).toEqual([
+            'XXDYXYYYXD,YYXYXYYYXD',
+            null,
+            null,
+            'CXYYXYYYXD,DDYYXYYYXD'
+        ]);
+        expect(thick.base).toBeNull();
+
+        expect(thin.neighbors).toEqual([
+            'CXDYXYYYXD,DDDYXYYYXD',
+            'XDYYXYYYXD,YYYYXYYYXD',
+            'XXYXYXDYXD,YYCXYXDYXD',
+            'CCXYXYYYXD,DYXYXYYYXD'
+        ]);
+        expect(thin.base).toBeNull();
     });
 });
