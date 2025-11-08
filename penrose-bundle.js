@@ -17,7 +17,7 @@ var penroseFillPolygon = (() => {
   };
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // penrose-fill-polygon.js
+  // src/penrose-fill-polygon.js
   var penrose_fill_polygon_exports = {};
   __export(penrose_fill_polygon_exports, {
     Rhombus: () => Rhombus,
@@ -204,7 +204,7 @@ var penroseFillPolygon = (() => {
     return randomUniform;
   }(defaultSource_default);
 
-  // penrose-fill-polygon.js
+  // src/penrose-fill-polygon.js
   var GOLDEN_RATIO = 0.6180339887498949;
   var cross2 = function(A, B) {
     var a1 = A.v1;
@@ -775,17 +775,16 @@ var penroseFillPolygon = (() => {
             if (!nei)
               continue;
             const entry = rhombhash[nei];
-            for (const i2 of range(4)) {
+            for (const i2 of range(4))
               if (entry.neighbors[i2] === rhombus.coord)
                 entry.neighbors[i2] = null;
-            }
           }
           delete rhombhash[rhombus.coord];
         }
       } while (cullRhombs.length);
     }
     discarded.concat(culledTris).forEach((tri) => tri.fillColor = "none");
-    var elengths = [];
+    const elengths = [];
     for (const { rhombus: rh } of Object.values(rhombhash))
       for (const [v1, v2] of [[rh.v1, rh.v2], [rh.v2, rh.v3], [rh.v3, rh.v4], [rh.v4, rh.v1]])
         elengths.push(Math.hypot(v2.x - v1.x, v2.y - v1.y));
@@ -811,10 +810,6 @@ var penroseFillPolygon = (() => {
         tri2.coord
       );
     }
-    elengths = [];
-    for (const { rhombus: rh } of Object.values(rhombhash))
-      for (const [v1, v2] of [[rh.v1, rh.v2], [rh.v2, rh.v3], [rh.v3, rh.v4], [rh.v4, rh.v1]])
-        elengths.push(Math.hypot(v2.x - v1.x, v2.y - v1.y));
     const rray = [];
     for (const { rhombus: rh } of Object.values(rhombhash)) {
       const cx = (rh.v1.x + rh.v3.x) / 2, cy = (rh.v1.y + rh.v3.y) / 2, cx2 = (rh.v2.x + rh.v4.x) / 2, cy2 = (rh.v2.y + rh.v4.y) / 2;
@@ -851,7 +846,7 @@ var penroseFillPolygon = (() => {
       console.log("not found", nf);
     for (const base of range(10))
       if (!bases_found.has(base))
-        console.log("unused", base_to_key[base]);
+        console.log("unused", base, base_to_key[base]);
     return {
       center,
       r,

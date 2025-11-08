@@ -29,10 +29,10 @@
     "npm-watch": "^0.11.0"
   },
   "watch": {
-    "build": "penrose-fill-polygon.js"
+    "build": "src/penrose-fill-polygon.js"
   },
   "scripts": {
-    "build": "esbuild penrose-fill-polygon.js --bundle --global-name=penroseFillPolygon --outfile=penrose-bundle.js",
+    "build": "esbuild src/penrose-fill-polygon.js --bundle --global-name=penroseFillPolygon --outfile=penrose-bundle.js",
     "watch": "npm-watch",
     "test": "vitest"
   },

@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {TriangleD, Vector} from '../penrose-fill-polygon.js';
+import {TriangleD, Vector} from '../src/penrose-fill-polygon.js';
 
 const GOLDEN_RATIO = 0.6180339887498948;
 

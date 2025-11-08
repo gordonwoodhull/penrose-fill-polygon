@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {calculatePenroseTiling, Vector} from '../penrose-fill-polygon.js';
+import {calculatePenroseTiling, Vector} from '../src/penrose-fill-polygon.js';
 import {normalizeNeighborOrdering} from './neighbor-normalizer.js';
 
 const generate = () =>
