@@ -1,6 +1,7 @@
 {
   "name": "penrose-fill-polygon",
   "version": "0.5",
+  "type": "module",
   "license": "Apache-2.0",
   "copyright": "2023",
   "description": "Generate random penrose P3 rhombuses to fill a polygon",
@@ -32,6 +33,10 @@
   },
   "scripts": {
     "build": "esbuild penrose-fill-polygon.js --bundle --global-name=penroseFillPolygon --outfile=penrose-bundle.js",
-    "watch": "npm-watch"
+    "watch": "npm-watch",
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.8"
   }
 }
