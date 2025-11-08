@@ -1,240 +1,33 @@
 // @ts-nocheck
-import {range, cross, min, max, extent, mean, deviation, sum} from 'd3-array';
+import {range, min, max, extent, mean, deviation} from 'd3-array';
 import {randomUniform} from 'd3-random';
+import {
+    GOLDEN_RATIO,
+    Vector,
+    Triangle,
+    TriangleC,
+    TriangleD,
+    TriangleX,
+    TriangleY,
+    trianglesIntersect,
+    triangleListsIntersect,
+    average_vectors,
+    interpolate_vectors
+} from './geometry';
 
-// ⁠φ^2 = φ + 1
-// φ = 1/(φ-1)
-var GOLDEN_RATIO = 0.6180339887498948482; // φ - 1
-
-
-// from Eyal's answer, based on Hassan's, on Stack Overflow
-// Detection of Triangle Collision in 2D Space
-// https://stackoverflow.com/a/44269990
-
-
-// check that all points of the other triangle are on the same side of the triangle after mapping to barycentric coordinates.
-// returns true if all points are outside on the same side
-var cross2 = function(A, B) {
-    var a1 = A.v1;
-    var a2 = A.v2;
-    var a3 = A.v3;
-    var b1 = B.v1;
-    var b2 = B.v2;
-    var b3 = B.v3;
-    // renamed variable names above, inconsistent with below
-    var dXa = a1.x - b3.x;
-    var dYa = a1.y - b3.y;
-    var dXb = a2.x - b3.x;
-    var dYb = a2.y - b3.y;
-    var dXc = a3.x - b3.x;
-    var dYc = a3.y - b3.y;
-    var dX21 = b3.x - b2.x;
-    var dY12 = b2.y - b3.y;
-    var D = dY12 * (b1.x - b3.x) + dX21 * (b1.y - b3.y);
-    var sa = dY12 * dXa + dX21 * dYa;
-    var sb = dY12 * dXb + dX21 * dYb;
-    var sc = dY12 * dXc + dX21 * dYc;
-    var ta = (b3.y - b1.y) * dXa + (b1.x - b3.x) * dYa;
-    var tb = (b3.y - b1.y) * dXb + (b1.x - b3.x) * dYb;
-    var tc = (b3.y - b1.y) * dXc + (b1.x - b3.x) * dYc;
-    if (D < 0) return ((sa >= 0 && sb >= 0 && sc >= 0) ||
-                       (ta >= 0 && tb >= 0 && tc >= 0) ||
-                       (sa+ta <= D && sb+tb <= D && sc+tc <= D));
-    return ((sa <= 0 && sb <= 0 && sc <= 0) ||
-            (ta <= 0 && tb <= 0 && tc <= 0) ||
-            (sa+ta >= D && sb+tb >= D && sc+tc >= D));
-}
-
-export var trianglesIntersect = function(A, B) {
-    return !(cross2(A, B) ||
-             cross2(B, A));
-}
-
-export var triangleListsIntersect = function(As, Bs) {
-    return cross(As, Bs).some(([A, B]) => trianglesIntersect(A, B));
-}
-
-// Used to represent both points and vectors for simplicity
-export class Vector {
-    constructor(x, y) {
-        this.x = x;
-        this.y = y;
-    }
-
-    static fromPoints(start, end) {
-        return new Vector(end.x - start.x, end.y - start.y);
-    }
-
-    static fromJson(json) {
-        return new Vector(json.x, json.y);
-    }
-
-    print(xform, yform, prec = 4) {
-        xform = xform || (x => x);
-        yform = yform || (y => y);
-        return `${xform(this.x).toFixed(prec)}, ${yform(this.y).toFixed(prec)}`;
-    }
-
-    multiply(multiplier) {
-        return new Vector(this.x * multiplier, this.y * multiplier);
-    }
-
-    add(anotherVector) {
-        return new Vector(this.x + anotherVector.x, this.y + anotherVector.y);
-    }
-
-    subtract(anotherVector) {
-        return new Vector(this.x - anotherVector.x, this.y - anotherVector.y);
-    }
-}
-
-export function average_vectors(...vs) {
-    return new Vector(
-        sum(vs, ({x}) => x)/vs.length,
-        sum(vs, ({y}) => y)/vs.length
-    );
-}
-
-export function interpolate_vectors(a, b, t) {
-    return new Vector(
-        a.x + (b.x - a.x) * t,
-        a.y + (b.y - a.y) * t,
-    )
-}
-
-// adapted from
-// https://stackoverflow.com/questions/2049582/how-to-determine-if-a-point-is-in-a-2d-triangle/2049593#2049593
-
-function sign(v1, v2, v3) {
-    return (v1.x - v3.x) * (v2.y - v3.y) - (v2.x - v3.x) * (v1.y - v3.y);
-}
-
-export class Triangle {
-    constructor(v1, v2, v3, coord, fillColor) {
-        this.v1 = v1;
-        this.v2 = v2;
-        this.v3 = v3;
-
-        this.fillColor = fillColor;
-        this.coord = coord;
-    }
-
-    pointInside(pt) {
-        const d1 = sign(pt, this.v1, this.v2),
-              d2 = sign(pt, this.v2, this.v3),
-              d3 = sign(pt, this.v3, this.v1);
-
-        const has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
-        const has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
-
-        return !(has_neg && has_pos);
-    }
-
-    center() {
-        return average_vectors(this.v1, this.v2, this.v3);
-    }
-
-    side(i) {
-        return i === 0 ? [this.v2, this.v3] :
-            i === 1 ? [this.v1, this.v2] :
-            i === 2 ? [this.v3, this.v1] :
-            null;
-    }
-}
-
-// C
-export class TriangleC extends Triangle {
-    constructor(v1, v2, v3, coord) {
-        super(v1, v2, v3, coord, 'blue');
-    }
-
-    split() {
-        var vector_12 = Vector.fromPoints(this.v1, this.v2).multiply(GOLDEN_RATIO);
-        var split_point_12 = this.v1.add(vector_12);
-
-        // parent v1, v2, v3 => t2, t1, t0
-        // child  v1, v2, v3 => t2, t1, t0
-        var new_triangles = [];
-        new_triangles.push(new TriangleC(this.v3, split_point_12, this.v2, 'C' + this.coord));
-        // child v1, v2, v3 => t2, t1, t0
-        new_triangles.push(new TriangleY(split_point_12, this.v3, this.v1, 'Y' + this.coord));
-
-        return new_triangles;
-    }
-}
-
-// D
-export class TriangleD extends Triangle {
-    constructor(v1, v2, v3, coord) {
-        super(v1, v2, v3, coord, 'blue');
-    }
-
-    split() {
-        var vector_13 = Vector.fromPoints(this.v1, this.v3).multiply(GOLDEN_RATIO);
-        var split_point_13 = this.v1.add(vector_13);
-
-        // parent v1, v2, v3 => t2, t1, t0
-        // child  v1, v2, v3 => t2, t1, t0
-        var new_triangles = [];
-        new_triangles.push(new TriangleD(this.v2, this.v3, split_point_13, 'D' + this.coord));
-        // child  v1, v2, v3 => t2, t1, t0
-        new_triangles.push(new TriangleX(split_point_13, this.v1, this.v2, 'X' + this.coord));
-
-        return new_triangles;
-    }
-}
-
-// X
-export class TriangleX extends Triangle {
-    constructor(v1, v2, v3, coord) {
-        super(v1, v2, v3, coord, 'red');
-    }
-
-    split() {
-        var vector_32 = Vector.fromPoints(this.v3, this.v2).multiply(GOLDEN_RATIO);
-        var split_point_32 = this.v3.add(vector_32);
-
-        var vector_31 = Vector.fromPoints(this.v3, this.v1).multiply(GOLDEN_RATIO);
-        var split_point_31 = this.v3.add(vector_31);
-
-        // parent v1, v2, v3 => t2, t1, t0
-        var new_triangles = [];
-        // child  v1, v2, v3 => t2, t1, t0
-        new_triangles.push(new TriangleY(split_point_31, split_point_32, this.v3, 'Y' + this.coord));
-        // child  v1, v2, v3 => t2, t1, t0
-        new_triangles.push(new TriangleC(split_point_32, split_point_31, this.v1, 'C' + this.coord));
-        // child  v1, v2, v3 => t2, t1, t0
-        new_triangles.push(new TriangleX(split_point_32, this.v1, this.v2, 'X' + this.coord));
-
-        return new_triangles;
-    }
-}
-
-// Y
-export class TriangleY extends Triangle {
-    constructor(v1, v2, v3, coord) {
-        super(v1, v2, v3, coord, 'red');
-    }
-
-    split() {
-        var vector_21 = Vector.fromPoints(this.v2, this.v1).multiply(GOLDEN_RATIO);
-        var split_point_21 = this.v2.add(vector_21);
-
-        var vector_23 = Vector.fromPoints(this.v2, this.v3).multiply(GOLDEN_RATIO);
-        var split_point_23 = this.v2.add(vector_23);
-
-        // parent v1, v2, v3 => t2, t1, t0
-        // child  v1, v2, v3 => t2, t1, t0
-        var new_triangles = [];
-        new_triangles.push(new TriangleY(split_point_23, this.v3, this.v1, 'Y' + this.coord));
-        // child  v1, v2, v3 => t2, t1, t0
-        new_triangles.push(new TriangleD(split_point_23, this.v1, split_point_21, 'D' + this.coord));
-        // child  v1, v2, v3 => t2, t1, t0
-        new_triangles.push(new TriangleX(split_point_21, this.v2, split_point_23, 'X' + this.coord));
-
-        return new_triangles;
-    }
-}
+export {
+    GOLDEN_RATIO,
+    Vector,
+    Triangle,
+    TriangleC,
+    TriangleD,
+    TriangleX,
+    TriangleY,
+    trianglesIntersect,
+    triangleListsIntersect,
+    average_vectors,
+    interpolate_vectors
+} from './geometry';
 
 export class Rhombus {
     constructor(v1, v2, v3, v4, coord, fillColor) {
