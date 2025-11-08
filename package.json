@@ -29,14 +29,16 @@
     "npm-watch": "^0.11.0"
   },
   "watch": {
-    "build": "src/penrose-fill-polygon.js"
+    "build": "src/index.ts"
   },
   "scripts": {
-    "build": "esbuild src/penrose-fill-polygon.js --bundle --global-name=penroseFillPolygon --outfile=penrose-bundle.js",
+    "build": "esbuild src/index.ts --bundle --global-name=penroseFillPolygon --outfile=penrose-bundle.js",
+    "typecheck": "tsc",
     "watch": "npm-watch",
     "test": "vitest"
   },
   "devDependencies": {
+    "typescript": "^5.9.3",
     "vitest": "^4.0.8"
   }
 }

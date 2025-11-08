@@ -1,3 +1,4 @@
+"use strict";
 var penroseFillPolygon = (() => {
   var __defProp = Object.defineProperty;
   var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -17,9 +18,9 @@ var penroseFillPolygon = (() => {
   };
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // src/penrose-fill-polygon.js
-  var penrose_fill_polygon_exports = {};
-  __export(penrose_fill_polygon_exports, {
+  // src/index.ts
+  var src_exports = {};
+  __export(src_exports, {
     Rhombus: () => Rhombus,
     Triangle: () => Triangle,
     TriangleC: () => TriangleC,
@@ -155,23 +156,23 @@ var penroseFillPolygon = (() => {
   // node_modules/d3-array/src/mean.js
   function mean(values, valueof) {
     let count = 0;
-    let sum = 0;
+    let sum2 = 0;
     if (valueof === void 0) {
       for (let value of values) {
         if (value != null && (value = +value) >= value) {
-          ++count, sum += value;
+          ++count, sum2 += value;
         }
       }
     } else {
       let index = -1;
       for (let value of values) {
         if ((value = valueof(value, ++index, values)) != null && (value = +value) >= value) {
-          ++count, sum += value;
+          ++count, sum2 += value;
         }
       }
     }
     if (count)
-      return sum / count;
+      return sum2 / count;
   }
 
   // node_modules/d3-array/src/range.js
@@ -182,6 +183,26 @@ var penroseFillPolygon = (() => {
       range2[i] = start + i * step;
     }
     return range2;
+  }
+
+  // node_modules/d3-array/src/sum.js
+  function sum(values, valueof) {
+    let sum2 = 0;
+    if (valueof === void 0) {
+      for (let value of values) {
+        if (value = +value) {
+          sum2 += value;
+        }
+      }
+    } else {
+      let index = -1;
+      for (let value of values) {
+        if (value = +valueof(value, ++index, values)) {
+          sum2 += value;
+        }
+      }
+    }
+    return sum2;
   }
 
   // node_modules/d3-random/src/defaultSource.js
@@ -204,7 +225,7 @@ var penroseFillPolygon = (() => {
     return randomUniform;
   }(defaultSource_default);
 
-  // src/penrose-fill-polygon.js
+  // src/index.ts
   var GOLDEN_RATIO = 0.6180339887498949;
   var cross2 = function(A, B) {
     var a1 = A.v1;
@@ -266,14 +287,14 @@ var penroseFillPolygon = (() => {
   };
   function average_vectors(...vs) {
     return new Vector(
-      d3.sum(vs, ({ x }) => x) / vs.length,
-      d3.sum(vs, ({ y }) => y) / vs.length
+      sum(vs, ({ x }) => x) / vs.length,
+      sum(vs, ({ y }) => y) / vs.length
     );
   }
   function interpolate_vectors(a, b, t) {
     return new Vector(
-      d3.interpolateNumber(a.x, b.x)(t),
-      d3.interpolateNumber(a.y, b.y)(t)
+      a.x + (b.x - a.x) * t,
+      a.y + (b.y - a.y) * t
     );
   }
   function sign(v1, v2, v3) {
@@ -288,9 +309,9 @@ var penroseFillPolygon = (() => {
       this.coord = coord;
     }
     pointInside(pt) {
-      const d1 = sign(pt, this.v1, this.v2), d2 = sign(pt, this.v2, this.v3), d32 = sign(pt, this.v3, this.v1);
-      const has_neg = d1 < 0 || d2 < 0 || d32 < 0;
-      const has_pos = d1 > 0 || d2 > 0 || d32 > 0;
+      const d1 = sign(pt, this.v1, this.v2), d2 = sign(pt, this.v2, this.v3), d3 = sign(pt, this.v3, this.v1);
+      const has_neg = d1 < 0 || d2 < 0 || d3 < 0;
+      const has_pos = d1 > 0 || d2 > 0 || d3 > 0;
       return !(has_neg && has_pos);
     }
     center() {
@@ -862,5 +883,5 @@ var penroseFillPolygon = (() => {
       scaleFunction: scale
     };
   }
-  return __toCommonJS(penrose_fill_polygon_exports);
+  return __toCommonJS(src_exports);
 })();

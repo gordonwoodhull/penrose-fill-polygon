@@ -1,4 +1,5 @@
-import {range, cross, min, max, extent, mean, deviation} from 'd3-array';
+// @ts-nocheck
+import {range, cross, min, max, extent, mean, deviation, sum} from 'd3-array';
 import {randomUniform} from 'd3-random';
 
 // ⁠φ^2 = φ + 1
@@ -89,15 +90,15 @@ export class Vector {
 
 export function average_vectors(...vs) {
     return new Vector(
-        d3.sum(vs, ({x}) => x)/vs.length,
-        d3.sum(vs, ({y}) => y)/vs.length
+        sum(vs, ({x}) => x)/vs.length,
+        sum(vs, ({y}) => y)/vs.length
     );
 }
 
 export function interpolate_vectors(a, b, t) {
     return new Vector(
-        d3.interpolateNumber(a.x, b.x)(t),
-        d3.interpolateNumber(a.y, b.y)(t),
+        a.x + (b.x - a.x) * t,
+        a.y + (b.y - a.y) * t,
     )
 }
 

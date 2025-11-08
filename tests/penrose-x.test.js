@@ -2,7 +2,7 @@ import {describe, it, expect} from 'vitest';
 import {
     calculatePenroseTiling,
     Vector
-} from '../src/penrose-fill-polygon.js';
+} from '../src/index.ts';
 import {normalizeNeighborOrdering} from './neighbor-normalizer.js';
 
 const deterministicPenrose = () =>
