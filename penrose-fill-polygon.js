@@ -1,7 +1,9 @@
 import {range, cross, min, max, extent, mean, deviation} from 'd3-array';
 import {randomUniform} from 'd3-random';
 
-var GOLDEN_RATIO = 0.6180339887498948482;
+// ⁠φ^2 = φ + 1
+// φ = 1/(φ-1)
+var GOLDEN_RATIO = 0.6180339887498948482; // φ - 1
 
 
 // from Eyal's answer, based on Hassan's, on Stack Overflow
@@ -149,8 +151,11 @@ export class TriangleC extends Triangle {
         var vector_12 = Vector.fromPoints(this.v1, this.v2).multiply(GOLDEN_RATIO);
         var split_point_12 = this.v1.add(vector_12);
 
+        // parent v1, v2, v3 => t2, t1, t0
+        // child  v1, v2, v3 => t2, t1, t0
         var new_triangles = [];
         new_triangles.push(new TriangleC(this.v3, split_point_12, this.v2, 'C' + this.coord));
+        // child v1, v2, v3 => t2, t1, t0
         new_triangles.push(new TriangleY(split_point_12, this.v3, this.v1, 'Y' + this.coord));
 
         return new_triangles;
@@ -167,8 +172,11 @@ export class TriangleD extends Triangle {
         var vector_13 = Vector.fromPoints(this.v1, this.v3).multiply(GOLDEN_RATIO);
         var split_point_13 = this.v1.add(vector_13);
 
+        // parent v1, v2, v3 => t2, t1, t0
+        // child  v1, v2, v3 => t2, t1, t0
         var new_triangles = [];
         new_triangles.push(new TriangleD(this.v2, this.v3, split_point_13, 'D' + this.coord));
+        // child  v1, v2, v3 => t2, t1, t0
         new_triangles.push(new TriangleX(split_point_13, this.v1, this.v2, 'X' + this.coord));
 
         return new_triangles;
@@ -188,9 +196,13 @@ export class TriangleX extends Triangle {
         var vector_31 = Vector.fromPoints(this.v3, this.v1).multiply(GOLDEN_RATIO);
         var split_point_31 = this.v3.add(vector_31);
 
+        // parent v1, v2, v3 => t2, t1, t0
         var new_triangles = [];
+        // child  v1, v2, v3 => t2, t1, t0
         new_triangles.push(new TriangleY(split_point_31, split_point_32, this.v3, 'Y' + this.coord));
+        // child  v1, v2, v3 => t2, t1, t0
         new_triangles.push(new TriangleC(split_point_32, split_point_31, this.v1, 'C' + this.coord));
+        // child  v1, v2, v3 => t2, t1, t0
         new_triangles.push(new TriangleX(split_point_32, this.v1, this.v2, 'X' + this.coord));
 
         return new_triangles;
@@ -210,9 +222,13 @@ export class TriangleY extends Triangle {
         var vector_23 = Vector.fromPoints(this.v2, this.v3).multiply(GOLDEN_RATIO);
         var split_point_23 = this.v2.add(vector_23);
 
+        // parent v1, v2, v3 => t2, t1, t0
+        // child  v1, v2, v3 => t2, t1, t0
         var new_triangles = [];
         new_triangles.push(new TriangleY(split_point_23, this.v3, this.v1, 'Y' + this.coord));
+        // child  v1, v2, v3 => t2, t1, t0
         new_triangles.push(new TriangleD(split_point_23, this.v1, split_point_21, 'D' + this.coord));
+        // child  v1, v2, v3 => t2, t1, t0
         new_triangles.push(new TriangleX(split_point_21, this.v2, split_point_23, 'X' + this.coord));
 
         return new_triangles;
@@ -671,10 +687,9 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
                     if(!nei)
                         continue;
                     const entry = rhombhash[nei];
-                    for(const i of range(4)) {
+                    for(const i of range(4))
                         if(entry.neighbors[i] === rhombus.coord)
                             entry.neighbors[i] = null;
-                    }
                 }
                 delete rhombhash[rhombus.coord];
             }
@@ -751,7 +766,7 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
         console.log('not found', nf);
     for(const base of range(10))
         if(!bases_found.has(base))
-            console.log('unused', base_to_key[base]);
+            console.log('unused', base, base_to_key[base]);
     
     return {
         center, r,
