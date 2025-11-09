@@ -14,6 +14,13 @@ import {
     average_vectors,
     interpolate_vectors
 } from './geometry';
+import {
+    TathamTriangleC,
+    TathamTriangleD,
+    TathamTriangleX,
+    TathamTriangleY,
+    toLegacyTriangle
+} from './tatham-triangle';
 
 export {
     GOLDEN_RATIO,
@@ -322,27 +329,15 @@ export function scaleVector(tl, scale) {
 }
 
 export function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile, resolveRagged, center, r) {
-    var ratio = Math.sin(36 * (Math.PI / 180)) / Math.sin(54 * (Math.PI / 180));
-    var startri = null, hei;
-    switch(startTile) {
-    case 'C':
-        hei = Math.min(width * ratio, height);
-        startri = new TriangleC(new Vector(width / 2 - hei / 2 / ratio, hei / 2), new Vector(width / 2 + hei / 2 / ratio, 0), new Vector(width / 2 + hei / 2 / ratio, hei), startTile);
-        break;
-    case 'D':
-        hei = Math.min(width * ratio, height);
-        startri = new TriangleD(new Vector(width / 2 - hei / 2 / ratio, hei / 2), new Vector(width / 2 + hei / 2 / ratio, 0), new Vector(width / 2 + hei / 2 / ratio, hei), startTile);
-        break;
-    case 'X':
-        hei = Math.min(width / 2.0 * ratio, height);
-        startri = new TriangleX(new Vector(width / 2.0, 0), new Vector(width / 2.0 + hei / ratio, hei), new Vector(width / 2.0 - hei / ratio, hei), startTile);
-        break;
-    case 'Y':
-        hei = Math.min(width / 2.0 * ratio, height);
-        startri = new TriangleY(new Vector(width / 2.0, 0), new Vector(width / 2.0 + hei / ratio, hei), new Vector(width / 2.0 - hei / ratio, hei), startTile);
-        break;
-    }
-    var triangles = [startri], polygon;
+    const startTriangle = {
+        C: TathamTriangleC.startTile,
+        D: TathamTriangleD.startTile,
+        X: TathamTriangleX.startTile,
+        Y: TathamTriangleY.startTile
+    }[startTile]?.(width, height);
+    if(!startTriangle)
+        throw new Error(`Unknown start tile ${startTile}`);
+    var triangles = [startTriangle], polygon;
     if(center && r)
         polygon = regularPolygon(center, r, boundsShape);
     else {
@@ -376,6 +371,8 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
         triangles,
         tri => polyTris.some(ptri => trianglesIntersect(ptri, tri)),
         tris => tris.length / 2 > minTiles);
+    triangles = triangles.map(toLegacyTriangle);
+    discarded = discarded.map(toLegacyTriangle);
 
     const trihash = {};
     for(var t of triangles)

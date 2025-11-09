@@ -11,6 +11,29 @@ import {
 const splitPoint = (start, end) =>
     start.add(Vector.fromPoints(start, end).multiply(GOLDEN_RATIO));
 
+const DEG = Math.PI / 180;
+const ROBINSON_RATIO = Math.sin(36 * DEG) / Math.sin(54 * DEG);
+
+function createCDStartVertices(width, height) {
+    const hei = Math.min(width * ROBINSON_RATIO, height);
+    const halfBase = hei / (2 * ROBINSON_RATIO);
+    return {
+        v1: new Vector(width / 2 - halfBase, hei / 2),
+        v2: new Vector(width / 2 + halfBase, 0),
+        v3: new Vector(width / 2 + halfBase, hei)
+    };
+}
+
+function createXYStartVertices(width, height) {
+    const hei = Math.min((width / 2) * ROBINSON_RATIO, height);
+    const offset = hei / ROBINSON_RATIO;
+    return {
+        v1: new Vector(width / 2, 0),
+        v2: new Vector(width / 2 + offset, hei),
+        v3: new Vector(width / 2 - offset, hei)
+    };
+}
+
 class TathamTriangle extends Triangle {
     constructor(v1, v2, v3, coord, fillColor) {
         super(v1, v2, v3, coord, fillColor);
@@ -20,6 +43,11 @@ class TathamTriangle extends Triangle {
 export class TathamTriangleC extends TathamTriangle {
     constructor(v1, v2, v3, coord) {
         super(v1, v2, v3, coord, 'blue');
+    }
+
+    static startTile(width, height) {
+        const {v1, v2, v3} = createCDStartVertices(width, height);
+        return new TathamTriangleC(v1, v2, v3, 'C');
     }
 
     split() {
@@ -36,6 +64,11 @@ export class TathamTriangleD extends TathamTriangle {
         super(v1, v2, v3, coord, 'blue');
     }
 
+    static startTile(width, height) {
+        const {v1, v2, v3} = createCDStartVertices(width, height);
+        return new TathamTriangleD(v1, v2, v3, 'D');
+    }
+
     split() {
         const split13 = splitPoint(this.v1, this.v3);
         return [
@@ -48,6 +81,11 @@ export class TathamTriangleD extends TathamTriangle {
 export class TathamTriangleX extends TathamTriangle {
     constructor(v1, v2, v3, coord) {
         super(v1, v2, v3, coord, 'red');
+    }
+
+    static startTile(width, height) {
+        const {v1, v2, v3} = createXYStartVertices(width, height);
+        return new TathamTriangleX(v1, v2, v3, 'X');
     }
 
     split() {
@@ -64,6 +102,11 @@ export class TathamTriangleX extends TathamTriangle {
 export class TathamTriangleY extends TathamTriangle {
     constructor(v1, v2, v3, coord) {
         super(v1, v2, v3, coord, 'red');
+    }
+
+    static startTile(width, height) {
+        const {v1, v2, v3} = createXYStartVertices(width, height);
+        return new TathamTriangleY(v1, v3, v2, 'Y');
     }
 
     split() {
