@@ -1,5 +1,6 @@
 import {describe, it, expect} from 'vitest';
 import {TriangleD, Vector} from '../src/index.ts';
+import {TathamTriangleD, toLegacyTriangle} from '../src/tatham-triangle.js';
 
 const GOLDEN_RATIO = 0.6180339887498948;
 
@@ -17,10 +18,40 @@ function makeTriangleD() {
     );
 }
 
-describe('TriangleD.split current vertex ordering', () => {
+function makeTathamTriangleD() {
+    return new TathamTriangleD(
+        new Vector(0, 5),
+        new Vector(10, 0),
+        new Vector(10, 10),
+        'D'
+    );
+}
+
+const implementations = [
+    {
+        label: 'legacy TriangleD',
+        setup: () => {
+            const parent = makeTriangleD();
+            return {parent, children: parent.split()};
+        }
+    },
+    {
+        label: 'TathamTriangleD via toLegacyTriangle',
+        setup: () => {
+            const parentT = makeTathamTriangleD();
+            const childrenT = parentT.split();
+            return {
+                parent: toLegacyTriangle(parentT),
+                children: childrenT.map(toLegacyTriangle)
+            };
+        }
+    }
+];
+
+describe.each(implementations)('$label', ({setup}) => {
     it('emits child triangles with the existing v1/v2/v3 order', () => {
-        const parent = makeTriangleD();
-        const [childD, childX] = parent.split();
+        const {parent, children} = setup();
+        const [childD, childX] = children;
 
         const vector13 = Vector.fromPoints(parent.v1, parent.v3).multiply(GOLDEN_RATIO);
         const splitPoint13 = parent.v1.add(vector13);
