@@ -1,8 +1,5 @@
 // @ts-nocheck
-declare const penroseFillPolygon: any;
-declare const d3: any;
-
-const {
+import {
     Vector,
     average_vectors,
     interpolate_vectors,
@@ -10,7 +7,8 @@ const {
     tatham_neighbor_or_null,
     calculateTrianglesBB,
     calculateRhombusesBB
-} = penroseFillPolygon;
+} from '../src/index';
+declare const d3: any;
 
 function highlightTriNeighbors(selector, coord) {
     const neighbors = d3.range(3).map(i => {
@@ -310,3 +308,5 @@ if(shape !== null && allowedShapes.includes(shape))
 const allowedRagged = d3.selectAll('input[name="resolve_ragged"]').nodes().map(elem => elem.value);
 if(ragged !== null && allowedRagged.includes(ragged))
     d3.selectAll('input[name="resolve_ragged"]').property('checked', function() { return this.value === ragged; });
+
+window.addEventListener('load', () => drawPenroseTiling());
