@@ -40,7 +40,6 @@ jobs:
           mkdir -p site
           cp penrose.html site/penrose.html
           cp penrose.html site/index.html
-          cp d3.v7.min.js site/
           cp ./*.png site/ || true
           cp -R dist site/dist
 
