@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {range, min, max, extent, mean, deviation} from 'd3-array';
 import {randomUniform} from 'd3-random';
 import {
@@ -12,7 +11,9 @@ import {
     trianglesIntersect,
     triangleListsIntersect,
     average_vectors,
-    interpolate_vectors
+    interpolate_vectors,
+    type Point,
+    type TriangleLike
 } from './geometry';
 import {
     TathamTriangleC,
@@ -37,38 +38,53 @@ export {
 } from './geometry';
 
 export class Rhombus {
-    constructor(v1, v2, v3, v4, coord, fillColor) {
-        this.v1 = v1;
-        this.v2 = v2;
-        this.v3 = v3;
-        this.v4 = v4;
+    constructor(
+        public v1: Vector,
+        public v2: Vector,
+        public v3: Vector,
+        public v4: Vector,
+        public coord: string,
+        public fillColor: string
+    ) {}
 
-        this.fillColor = fillColor;
-        this.coord = coord;
-    }
-    getTriangles() {
+    getTriangles(): [Triangle, Triangle] {
         return [
-            new Triangle(this.v1, this.v2, this.v3),
-            new Triangle(this.v3, this.v4, this.v1)
+            new Triangle(this.v1, this.v2, this.v3, this.coord, this.fillColor),
+            new Triangle(this.v3, this.v4, this.v1, this.coord, this.fillColor)
         ];
     }
-    getPoints() {
+
+    getPoints(): [Vector, Vector, Vector, Vector] {
         return [this.v1, this.v2, this.v3, this.v4];
     }
-    side(i) {
+
+    side(i: 0 | 1 | 2 | 3): [Vector, Vector] | null {
         return i === 0 ? [this.v1, this.v2] :
             i === 1 ? [this.v2, this.v3] :
             i === 2 ? [this.v3, this.v4] :
             i === 3 ? [this.v4, this.v1] :
             null;
     }
-    static fromJson(json) {
+
+    static fromJson(json: {v1: Point; v2: Point; v3: Point; v4: Point; coord: string; fillColor: string}): Rhombus {
         const {v1, v2, v3, v4, coord, fillColor} = json;
-        return new Rhombus(Vector.fromJson(v1), Vector.fromJson(v2), Vector.fromJson(v3), Vector.fromJson(v4), coord, fillColor);
+        return new Rhombus(
+            Vector.fromJson(v1),
+            Vector.fromJson(v2),
+            Vector.fromJson(v3),
+            Vector.fromJson(v4),
+            coord,
+            fillColor
+        );
     }
 }
 
-const rtri_neighbors = {
+type TriangleKind = 'C' | 'D' | 'X' | 'Y';
+type ExternalNeighbor = {external: true; side: 0 | 1 | 2; hand?: 'l' | 'r'};
+type InternalNeighbor = {prefix: TriangleKind; enter: 0 | 1 | 2};
+type Neighbor = ExternalNeighbor | InternalNeighbor;
+
+const rtri_neighbors: Record<string, Record<0 | 1 | 2, Neighbor>> = {
     CC: {
         0: {external: true, side: 1, hand: 'r'},
         1: {prefix: 'Y', enter: 1},
@@ -119,70 +135,74 @@ const rtri_neighbors = {
         1: {external: true, side: 1, hand: 'r'},
         2: {prefix: 'D', enter: 2}
     }
-};
+} as const;
 
-const other_hand = {
+const other_hand: Record<'l' | 'r', 'l' | 'r'> = {
     l: 'r',
     r: 'l'
-};
+} as const;
 
-const rtri_entries = {
+type WholeSide = {w: {part: TriangleKind; side: 0 | 1 | 2}};
+type SplitSide = {l: {part: TriangleKind; side: 0 | 1 | 2}; r: {part: TriangleKind; side: 0 | 1 | 2}};
+type EntryDirection = WholeSide | SplitSide;
+
+const rtri_entries: Record<TriangleKind, Record<0 | 1 | 2, EntryDirection>> = {
     C: {
         0: {w: {part: 'C', side: 2}},
-        1: {l: {part: 'Y', side: 2},
-            r: {part: 'C', side: 0}},
+        1: {l: {part: 'Y', side: 2}, r: {part: 'C', side: 0}},
         2: {w: {part: 'Y', side: 0}}
     },
     D: {
         0: {w: {part: 'D', side: 1}},
         1: {w: {part: 'X', side: 0}},
-        2: {l: {part: 'D', side: 0},
-            r: {part: 'X', side: 1}}
+        2: {l: {part: 'D', side: 0}, r: {part: 'X', side: 1}}
     },
     X: {
-        0: {l: {part: 'X', side: 2},
-            r: {part: 'Y', side: 0}},
+        0: {l: {part: 'X', side: 2}, r: {part: 'Y', side: 0}},
         1: {w: {part: 'X', side: 0}},
-        2: {l: {part: 'Y', side: 2},
-            r: {part: 'C', side: 0}}
+        2: {l: {part: 'Y', side: 2}, r: {part: 'C', side: 0}}
     },
     Y: {
-        0: {l: {part: 'X', side: 0},
-            r: {part: 'Y', side: 1}},
-        1: {l: {part: 'D', side: 0},
-            r: {part: 'X', side: 1}},
+        0: {l: {part: 'X', side: 0}, r: {part: 'Y', side: 1}},
+        1: {l: {part: 'D', side: 0}, r: {part: 'X', side: 1}},
         2: {w: {part: 'Y', side: 0}}
     }
-}
+};
 
-export function tatham_neighbor(coord, side) {
+type NeighborKey = keyof typeof rtri_neighbors;
+type EntryKey = keyof typeof rtri_entries;
+
+export function tatham_neighbor(coord: string, side: 0 | 1 | 2): [string, number] {
     if(coord.length < 2)
         throw new Error("no neighbor");
     const pre2 = coord.slice(0, 2);
-    const neighbors = rtri_neighbors[pre2];
-    console.assert(neighbors, 'unknown prefix', pre2);
+    const neighbors = rtri_neighbors[pre2 as NeighborKey];
+    if(!neighbors)
+        throw new Error(`unknown prefix ${pre2}`);
     const nei = neighbors[side];
-    var result;
-    if(nei.external) {
-        console.assert(nei.side !== undefined);
-        const [parent, pside] = tatham_neighbor(coord.slice(1), nei.side);
-        const enter = rtri_entries[parent[0]][pside];
-        let part, side;
+    if('external' in nei && nei.external) {
+        const [parent, pside] = tatham_neighbor(coord.slice(1), nei.side as 0 | 1 | 2);
+        const prefix = parent[0] as EntryKey;
+        const enter = rtri_entries[prefix][pside as 0 | 1 | 2];
+        let part: string;
+        let nextSide: number;
         if(nei.hand) {
-            console.assert(enter.l);
-            ({part, side} = enter[other_hand[nei.hand]]);
+            if('l' in enter) {
+                ({part, side: nextSide} = enter[other_hand[nei.hand]]);
+            } else throw new Error('expected handed entry');
         } else {
-            console.assert(enter.w);
-            ({part, side} = enter.w);
+            if('w' in enter) {
+                ({part, side: nextSide} = enter.w);
+            } else throw new Error('expected wedge entry');
         }
-        return [part + parent, side];
+        return [part + parent, nextSide];
     }
     else {
         return [nei.prefix + coord.slice(1), nei.enter];
     }
 }
 
-export function tatham_neighbor_or_null(coord, side) {
+export function tatham_neighbor_or_null(coord: string, side: 0 | 1 | 2): string | null {
     try {
         return tatham_neighbor(coord, side)[0];
     }
@@ -202,28 +222,34 @@ const shape_spec = {
         offset: -0.25
     },
     hexagon: {
-        sides: 6
+        sides: 6,
+        offset: 0
     }
-};
+} as const;
 
-function regularPolygon(center, r, shape) {
+function regularPolygon(center: Vector, r: number, shape: keyof typeof shape_spec): Vector[] {
     const {sides, offset} = shape_spec[shape];
-    const thetas = range(offset || 0, sides, 1).map(v => v * 2 * Math.PI / sides);
+    const thetas = range(offset ?? 0, sides, 1).map(v => v * 2 * Math.PI / sides);
     return thetas.map(theta => new Vector(Math.cos(theta)*r + center.x, Math.sin(theta)*r + center.y));
 }
 
-function triangulate(polygon) {
-    return range(2, polygon.length).map(i => new Triangle(polygon[0], polygon[i-1], polygon[i], "N/A", "green"));
+function triangulate(polygon: Vector[]): Triangle[] {
+    return range(2, polygon.length).map(i => new Triangle(polygon[0], polygon[i-1], polygon[i], 'N/A', 'green'));
 }
 
-function generateTriangles(triangles, filt, enough) {
-    const discarded = [];
+type TrianglePredicate<T extends TriangleLike> = (tri: T) => boolean;
+type TriangleEnough<T extends TriangleLike> = (tris: T[]) => boolean;
+
+function generateTriangles<T extends TriangleLike>(
+    triangles: T[],
+    filt: TrianglePredicate<T>,
+    enough: TriangleEnough<T>
+): [T[], T[]] {
+    const discarded: T[] = [];
     do {
-        var new_triangles = [];
-        for (var i = 0; i < triangles.length; i++) {
-            var trig = triangles[i];
-            new_triangles = new_triangles.concat(trig.split());
-        }
+        const new_triangles: T[] = [];
+        for (const trig of triangles)
+            new_triangles.push(...trig.split() as T[]);
         triangles = new_triangles.filter(tri => {
             if(filt(tri))
                 return true;
@@ -235,7 +261,7 @@ function generateTriangles(triangles, filt, enough) {
     return [triangles, discarded];
 }
 
-function lighten(color) {
+function lighten(color: string): string {
     switch(color) {
     case 'blue':
         return 'lightblue';
@@ -393,7 +419,7 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
             }
         }
     }
-    var found_tris = [];
+    var found_tris : TriangleLike = [];
     if(find_tris.length) {
         [found_tris] = generateTriangles(
             [startri],
@@ -415,7 +441,7 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
         trihash[t.coord] = t;
     const rhombhash = {};
     const tri2rhomb = {};
-    for(var [i, t] of triangles.entries()) {
+    for(var [_, t] of triangles.entries()) {
         var oh = tatham_neighbor_or_null(t.coord, 0);
         var t2;
         if(oh && (t2 = trihash[oh])) {

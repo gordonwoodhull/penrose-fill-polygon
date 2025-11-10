@@ -38,6 +38,8 @@
     "test": "vitest"
   },
   "devDependencies": {
+    "@types/d3-array": "^3.2.2",
+    "@types/d3-random": "^3.0.3",
     "typescript": "^5.9.3",
     "vitest": "^4.0.8"
   }

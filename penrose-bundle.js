@@ -1,3 +1,4 @@
+"use strict";
 var penroseFillPolygon = (() => {
   var __defProp = Object.defineProperty;
   var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -383,6 +384,118 @@ var penroseFillPolygon = (() => {
     return cross(As, Bs).some(([A, B]) => trianglesIntersect(A, B));
   };
 
+  // src/tatham-triangle.js
+  function splitPoint(a, b) {
+    return new Vector(
+      a.x + (b.x - a.x) * GOLDEN_RATIO,
+      a.y + (b.y - a.y) * GOLDEN_RATIO
+    );
+  }
+  var DEG = Math.PI / 180;
+  var ROBINSON_RATIO = Math.sin(36 * DEG) / Math.sin(54 * DEG);
+  function createCDStartVertices(width, height) {
+    const hei = Math.min(width * ROBINSON_RATIO, height);
+    const halfBase = hei / (2 * ROBINSON_RATIO);
+    return {
+      v1: new Vector(width / 2 + halfBase, hei),
+      v2: new Vector(width / 2 + halfBase, 0),
+      v3: new Vector(width / 2 - halfBase, hei / 2)
+    };
+  }
+  function createXYStartVertices(width, height) {
+    const hei = Math.min(width / 2 * ROBINSON_RATIO, height);
+    const offset = hei / ROBINSON_RATIO;
+    return {
+      v1: new Vector(width / 2 - offset, hei),
+      v2: new Vector(width / 2 + offset, hei),
+      v3: new Vector(width / 2, 0)
+    };
+  }
+  var TathamTriangle = class extends Triangle {
+    constructor(v1, v2, v3, coord, fillColor) {
+      super(v1, v2, v3, coord, fillColor);
+    }
+  };
+  var TathamTriangleC = class _TathamTriangleC extends TathamTriangle {
+    constructor(v1, v2, v3, coord) {
+      super(v1, v2, v3, coord, "blue");
+    }
+    static startTile(width, height) {
+      const { v1, v2, v3 } = createCDStartVertices(width, height);
+      return new _TathamTriangleC(v1, v2, v3, "C");
+    }
+    split() {
+      const split1 = splitPoint(this.v3, this.v2);
+      return [
+        new _TathamTriangleC(this.v2, split1, this.v1, "C" + this.coord),
+        new TathamTriangleY(this.v3, this.v1, split1, "Y" + this.coord)
+      ];
+    }
+  };
+  var TathamTriangleD = class _TathamTriangleD extends TathamTriangle {
+    constructor(v1, v2, v3, coord) {
+      super(v1, v2, v3, coord, "blue");
+    }
+    static startTile(width, height) {
+      const { v1, v2, v3 } = createCDStartVertices(width, height);
+      return new _TathamTriangleD(v1, v2, v3, "D");
+    }
+    split() {
+      const split2 = splitPoint(this.v3, this.v1);
+      return [
+        new _TathamTriangleD(split2, this.v1, this.v2, "D" + this.coord),
+        new TathamTriangleX(this.v2, this.v3, split2, "X" + this.coord)
+      ];
+    }
+  };
+  var TathamTriangleX = class _TathamTriangleX extends TathamTriangle {
+    constructor(v1, v2, v3, coord) {
+      super(v1, v2, v3, coord, "red");
+    }
+    static startTile(width, height) {
+      const { v1, v2, v3 } = createXYStartVertices(width, height);
+      return new _TathamTriangleX(v1, v2, v3, "X");
+    }
+    split() {
+      const split0 = splitPoint(this.v1, this.v2);
+      const split2 = splitPoint(this.v1, this.v3);
+      return [
+        new TathamTriangleY(this.v1, split0, split2, "Y" + this.coord),
+        new TathamTriangleC(this.v3, split2, split0, "C" + this.coord),
+        new _TathamTriangleX(this.v2, this.v3, split0, "X" + this.coord)
+      ];
+    }
+  };
+  var TathamTriangleY = class _TathamTriangleY extends TathamTriangle {
+    constructor(v1, v2, v3, coord) {
+      super(v1, v2, v3, coord, "red");
+    }
+    static startTile(width, height) {
+      const { v1, v2, v3 } = createXYStartVertices(width, height);
+      return new _TathamTriangleY(v1, v2, v3, "Y");
+    }
+    split() {
+      const split0 = splitPoint(this.v2, this.v1);
+      const split1 = splitPoint(this.v2, this.v3);
+      return [
+        new _TathamTriangleY(this.v3, this.v1, split0, "Y" + this.coord),
+        new TathamTriangleD(split1, this.v3, split0, "D" + this.coord),
+        new TathamTriangleX(split0, this.v2, split1, "X" + this.coord)
+      ];
+    }
+  };
+  function toLegacyTriangle(triangle) {
+    if (triangle instanceof TathamTriangleC)
+      return new TriangleC(triangle.v3, triangle.v2, triangle.v1, triangle.coord);
+    if (triangle instanceof TathamTriangleD)
+      return new TriangleD(triangle.v3, triangle.v2, triangle.v1, triangle.coord);
+    if (triangle instanceof TathamTriangleX)
+      return new TriangleX(triangle.v3, triangle.v2, triangle.v1, triangle.coord);
+    if (triangle instanceof TathamTriangleY)
+      return new TriangleY(triangle.v3, triangle.v2, triangle.v1, triangle.coord);
+    throw new Error("Unsupported triangle supplied to toLegacyTriangle");
+  }
+
   // src/index.ts
   var Rhombus = class _Rhombus {
     constructor(v1, v2, v3, v4, coord, fillColor) {
@@ -566,7 +679,7 @@ var penroseFillPolygon = (() => {
       var new_triangles = [];
       for (var i = 0; i < triangles.length; i++) {
         var trig = triangles[i];
-        new_triangles = new_triangles.concat(trig.split());
+        new_triangles.push(...trig.split());
       }
       triangles = new_triangles.filter((tri) => {
         if (filt(tri))
@@ -664,27 +777,15 @@ var penroseFillPolygon = (() => {
     };
   }
   function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile, resolveRagged, center, r) {
-    var ratio = Math.sin(36 * (Math.PI / 180)) / Math.sin(54 * (Math.PI / 180));
-    var startri = null, hei;
-    switch (startTile) {
-      case "C":
-        hei = Math.min(width * ratio, height);
-        startri = new TriangleC(new Vector(width / 2 - hei / 2 / ratio, hei / 2), new Vector(width / 2 + hei / 2 / ratio, 0), new Vector(width / 2 + hei / 2 / ratio, hei), startTile);
-        break;
-      case "D":
-        hei = Math.min(width * ratio, height);
-        startri = new TriangleD(new Vector(width / 2 - hei / 2 / ratio, hei / 2), new Vector(width / 2 + hei / 2 / ratio, 0), new Vector(width / 2 + hei / 2 / ratio, hei), startTile);
-        break;
-      case "X":
-        hei = Math.min(width / 2 * ratio, height);
-        startri = new TriangleX(new Vector(width / 2, 0), new Vector(width / 2 + hei / ratio, hei), new Vector(width / 2 - hei / ratio, hei), startTile);
-        break;
-      case "Y":
-        hei = Math.min(width / 2 * ratio, height);
-        startri = new TriangleY(new Vector(width / 2, 0), new Vector(width / 2 + hei / ratio, hei), new Vector(width / 2 - hei / ratio, hei), startTile);
-        break;
-    }
-    var triangles = [startri], polygon;
+    const startTriangle = {
+      C: TathamTriangleC.startTile,
+      D: TathamTriangleD.startTile,
+      X: TathamTriangleX.startTile,
+      Y: TathamTriangleY.startTile
+    }[startTile]?.(width, height);
+    if (!startTriangle)
+      throw new Error(`Unknown start tile ${startTile}`);
+    var triangles = [startTriangle], polygon;
     if (center && r)
       polygon = regularPolygon(center, r, boundsShape);
     else {
@@ -716,7 +817,7 @@ var penroseFillPolygon = (() => {
       (tri) => polyTris.some((ptri) => trianglesIntersect(ptri, tri)),
       (tris) => tris.length / 2 > minTiles
     );
-    const trihash = {};
+    let trihash = {};
     for (var t of triangles)
       trihash[t.coord] = t;
     const disind = [];
@@ -752,9 +853,14 @@ var penroseFillPolygon = (() => {
         trihash[tri.coord] = tri;
       triangles.push(...found_tris);
     }
+    triangles = triangles.map(toLegacyTriangle);
+    discarded = discarded.map(toLegacyTriangle);
+    trihash = {};
+    for (var t of triangles)
+      trihash[t.coord] = t;
     const rhombhash = {};
     const tri2rhomb = {};
-    for (var [i, t] of triangles.entries()) {
+    for (var [_, t] of triangles.entries()) {
       var oh = tatham_neighbor_or_null(t.coord, 0);
       var t2;
       if (oh && (t2 = trihash[oh])) {
