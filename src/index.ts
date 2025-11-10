@@ -1,4 +1,4 @@
-import {range, min, max, extent, mean, deviation} from 'd3-array';
+import {range, min, max, extent, mean} from 'd3-array';
 import {randomUniform} from 'd3-random';
 import {
     GOLDEN_RATIO,
@@ -22,6 +22,43 @@ import {
     TathamTriangleY,
     toLegacyTriangle
 } from './tatham-triangle';
+
+type TriangleKind = 'C' | 'D' | 'X' | 'Y';
+type BoundsShape = 'square' | 'pentagon' | 'hexagon';
+type ResolveRaggedMode = 'none' | 'cull' | 'fill';
+type TathamTriangleType = TathamTriangleC | TathamTriangleD | TathamTriangleX | TathamTriangleY;
+
+interface ShapeSpecEntry {
+    sides: number;
+    offset: number;
+}
+
+interface RhombHashEntry {
+    rhombus: Rhombus;
+    tri1: Triangle;
+    tri2: Triangle;
+    neighbors: Array<string | null>;
+    tri1scale?: Triangle;
+    tri2scale?: Triangle;
+    center?: Vector;
+    key?: string;
+    base: number | null;
+}
+
+export interface PenroseTilingResult {
+    center: Vector;
+    r: number;
+    polygon: Vector[];
+    robinsonTriangles: Triangle[];
+    discardedTriangles: Triangle[];
+    culledTriangles: Triangle[];
+    p3Rhombuses: Record<string, RhombHashEntry>;
+    culledRhombuses: Rhombus[];
+    fillsIdentified: string[];
+    fillsFound: Triangle[];
+    rhombBases: number[];
+    scaleFunction: (vector: Vector) => Vector;
+}
 
 export {
     GOLDEN_RATIO,
@@ -79,7 +116,6 @@ export class Rhombus {
     }
 }
 
-type TriangleKind = 'C' | 'D' | 'X' | 'Y';
 type ExternalNeighbor = {external: true; side: 0 | 1 | 2; hand?: 'l' | 'r'};
 type InternalNeighbor = {prefix: TriangleKind; enter: 0 | 1 | 2};
 type Neighbor = ExternalNeighbor | InternalNeighbor;
@@ -172,7 +208,7 @@ const rtri_entries: Record<TriangleKind, Record<0 | 1 | 2, EntryDirection>> = {
 type NeighborKey = keyof typeof rtri_neighbors;
 type EntryKey = keyof typeof rtri_entries;
 
-export function tatham_neighbor(coord: string, side: 0 | 1 | 2): [string, number] {
+export function tatham_neighbor(coord: string, side: 0 | 1 | 2): [string, 0 | 1 | 2] {
     if(coord.length < 2)
         throw new Error("no neighbor");
     const pre2 = coord.slice(0, 2);
@@ -180,12 +216,12 @@ export function tatham_neighbor(coord: string, side: 0 | 1 | 2): [string, number
     if(!neighbors)
         throw new Error(`unknown prefix ${pre2}`);
     const nei = neighbors[side];
-    if('external' in nei && nei.external) {
-        const [parent, pside] = tatham_neighbor(coord.slice(1), nei.side as 0 | 1 | 2);
+    if('external' in nei) {
+        const [parent, pside] = tatham_neighbor(coord.slice(1), nei.side);
         const prefix = parent[0] as EntryKey;
-        const enter = rtri_entries[prefix][pside as 0 | 1 | 2];
-        let part: string;
-        let nextSide: number;
+        const enter = rtri_entries[prefix][pside];
+        let part: TriangleKind;
+        let nextSide: 0 | 1 | 2;
         if(nei.hand) {
             if('l' in enter) {
                 ({part, side: nextSide} = enter[other_hand[nei.hand]]);
@@ -212,7 +248,7 @@ export function tatham_neighbor_or_null(coord: string, side: 0 | 1 | 2): string 
     }
 }
 
-const shape_spec = {
+const shape_spec: Record<BoundsShape, ShapeSpecEntry> = {
     square: {
         sides: 4,
         offset: 0.5
@@ -225,9 +261,9 @@ const shape_spec = {
         sides: 6,
         offset: 0
     }
-} as const;
+};
 
-function regularPolygon(center: Vector, r: number, shape: keyof typeof shape_spec): Vector[] {
+function regularPolygon(center: Vector, r: number, shape: BoundsShape): Vector[] {
     const {sides, offset} = shape_spec[shape];
     const thetas = range(offset ?? 0, sides, 1).map(v => v * 2 * Math.PI / sides);
     return thetas.map(theta => new Vector(Math.cos(theta)*r + center.x, Math.sin(theta)*r + center.y));
@@ -273,7 +309,7 @@ function lighten(color: string): string {
 }
 
 // unit-length edges
-export function calculateBaseRhombuses() {
+export function calculateBaseRhombuses(): RhombusVectors[] {
     const TAU = 2*Math.PI;
     const cos36_2 = Math.cos(TAU/10) / 2,
           sin36_2 = Math.sin(TAU/10) / 2;
@@ -284,13 +320,13 @@ export function calculateBaseRhombuses() {
     //     /     /
     //    /     /
     //   -------
-    const rhomb0 = [
+    const rhomb0: RhombusVectors = [
         new Vector(0.5 - cos72_2, -sin72_2),
         new Vector(0.5 + cos72_2, sin72_2),
         new Vector(cos72_2 - 0.5, sin72_2),
         new Vector(-0.5 - cos72_2, -sin72_2)
     ];
-    const rhomb9 = [
+    const rhomb9: RhombusVectors = [
         new Vector(0.5 + cos36_2, sin36_2),
         new Vector(cos36_2 - 0.5, sin36_2),
         new Vector(-0.5 - cos36_2, -sin36_2),
@@ -301,117 +337,163 @@ export function calculateBaseRhombuses() {
                   TAU*2/10, -TAU/10, -TAU*4/10, TAU*3/10, 0];
     return range(20)
         .map(i => {
-	    // above prototype coords are y increasing upward
-	    // we must flip results and reverse order while still starting at apex
-	    const rhomb = i%10 < 5 ? rhomb0 : rhomb9;
-	    const rot = i < 10 ? rots[i] : rots[i-10] + TAU/2;
-	    const rv = rhomb.map(({x,y}) =>
-		new Vector(
+            // above prototype coords are y increasing upward
+            // we must flip results and reverse order while still starting at apex
+            const rhomb = i%10 < 5 ? rhomb0 : rhomb9;
+            const rot = i < 10 ? rots[i] : rots[i-10] + TAU/2;
+            const rv = rhomb.map(({x,y}) =>
+                new Vector(
                     x * Math.cos(rot) - y * Math.sin(rot),
                     -(x * Math.sin(rot) + y * Math.cos(rot))
-		));
-	    return [rv[0], rv[3], rv[2], rv[1]];
-	});
+                )) as RhombusVectors;
+            return [rv[0], rv[3], rv[2], rv[1]] as RhombusVectors;
+        });
 }
 let base_rhombuses = calculateBaseRhombuses();
 
+export const truncate_float = (prec: number) => (x: number): string =>
+    Math.abs(x) < 10 ** -prec ? (0).toFixed(prec) : x.toFixed(prec);
 
+type RhombusVectors = [Vector, Vector, Vector, Vector];
 
-export const truncate_float = prec => x => Math.abs(x) < 10 ** -prec ? 0..toFixed(prec) : x.toFixed(prec);
-
-export function rhomb_key(vs, prec = 10) {
-    if(vs instanceof Rhombus)
-        vs = [vs.v1, vs.v2, vs.v3, vs.v4];
+export function rhomb_key(vs: Rhombus | RhombusVectors, prec = 10): string {
+    const vectors: RhombusVectors = vs instanceof Rhombus ? [vs.v1, vs.v2, vs.v3, vs.v4] : vs;
     const trunc = truncate_float(prec);
-    return vs.flatMap(v => [trunc(v.x), trunc(v.y)]).join(',');
+    return vectors.flatMap(v => [trunc(v.x), trunc(v.y)]).join(',');
 }
 
-export function calculateTrianglesBB(tris) {
+export function calculateTrianglesBB(tris: Triangle[]): {tl: Vector; br: Vector} {
+    if(!tris.length)
+        throw new Error('Cannot compute bounding box of empty triangle list');
     const tl = new Vector(
-        min(tris, tri => min([tri.v1.x, tri.v2.x, tri.v3.x])),
-        min(tris, tri => min([tri.v1.y, tri.v2.y, tri.v3.y])));
+        min(tris, tri => min([tri.v1.x, tri.v2.x, tri.v3.x]) ?? Infinity)!,
+        min(tris, tri => min([tri.v1.y, tri.v2.y, tri.v3.y]) ?? Infinity)!
+    );
     const br = new Vector(
-        max(tris, tri => max([tri.v1.x, tri.v2.x, tri.v3.x])),
-        max(tris, tri => max([tri.v1.y, tri.v2.y, tri.v3.y])));
+        max(tris, tri => max([tri.v1.x, tri.v2.x, tri.v3.x]) ?? -Infinity)!,
+        max(tris, tri => max([tri.v1.y, tri.v2.y, tri.v3.y]) ?? -Infinity)!
+    );
     return {tl, br};
 }
 
-export function calculateRhombusesBB(rhombs) {
+export function calculateRhombusesBB(rhombs: Rhombus[]): {tl: Vector; br: Vector} {
+    if(!rhombs.length)
+        throw new Error('Cannot compute bounding box of empty rhombus list');
     const tl = new Vector(
-        min(rhombs, rhomb => min([rhomb.v1.x, rhomb.v2.x, rhomb.v3.x, rhomb.v4.x])),
-        min(rhombs, rhomb => min([rhomb.v1.y, rhomb.v2.y, rhomb.v3.y, rhomb.v4.y])));
+        min(rhombs, rhomb => min([rhomb.v1.x, rhomb.v2.x, rhomb.v3.x, rhomb.v4.x]) ?? Infinity)!,
+        min(rhombs, rhomb => min([rhomb.v1.y, rhomb.v2.y, rhomb.v3.y, rhomb.v4.y]) ?? Infinity)!
+    );
     const br = new Vector(
-        max(rhombs, rhomb => max([rhomb.v1.x, rhomb.v2.x, rhomb.v3.x, rhomb.v4.x])),
-        max(rhombs, rhomb => max([rhomb.v1.y, rhomb.v2.y, rhomb.v3.y, rhomb.v4.y])));
+        max(rhombs, rhomb => max([rhomb.v1.x, rhomb.v2.x, rhomb.v3.x, rhomb.v4.x]) ?? -Infinity)!,
+        max(rhombs, rhomb => max([rhomb.v1.y, rhomb.v2.y, rhomb.v3.y, rhomb.v4.y]) ?? -Infinity)!
+    );
     return {tl, br};
 }
 
-export function scaleVector(tl, scale) {
-    return v => {
-        return new Vector(
-            (v.x - tl.x) * scale,
-            (v.y - tl.y) * scale);
-    };
+export function scaleVector(tl: Vector, scale: number): (v: Vector) => Vector {
+    return v => new Vector(
+        (v.x - tl.x) * scale,
+        (v.y - tl.y) * scale
+    );
 }
 
-export function calculatePenroseTiling(minTiles, width, height, boundsShape, startTile, resolveRagged, center, r) {
-    const startTriangle = {
+export function calculatePenroseTiling(
+    minTiles: number,
+    width: number,
+    height: number,
+    boundsShape: BoundsShape,
+    startTile: TriangleKind,
+    resolveRagged: ResolveRaggedMode,
+    center?: Vector | null,
+    r?: number | null
+): PenroseTilingResult {
+    const startTriangleFactory = {
         C: TathamTriangleC.startTile,
         D: TathamTriangleD.startTile,
         X: TathamTriangleX.startTile,
         Y: TathamTriangleY.startTile
-    }[startTile]?.(width, height);
-    if(!startTriangle)
+    }[startTile];
+    if(!startTriangleFactory)
         throw new Error(`Unknown start tile ${startTile}`);
-    var triangles = [startTriangle], polygon;
-    if(center && r)
+    const startTriangle = startTriangleFactory(width, height);
+
+    let polygon: Vector[] = [];
+    let tilingCenter: Vector;
+    let radius: number;
+
+    if(center && typeof r === 'number') {
+        tilingCenter = center;
+        radius = r;
         polygon = regularPolygon(center, r, boundsShape);
-    else {
-        const [xmin, xmax] = extent([startri.v1.x, startri.v2.x, startri.v3.x]);
-        const [ymin, ymax] = extent([startri.v1.y, startri.v2.y, startri.v3.y]);
-        r = randomUniform(width/1000, width/8)();
-        let r_tries = 5, found = false;
+    } else {
+        const xExtent = extent([startTriangle.v1.x, startTriangle.v2.x, startTriangle.v3.x]);
+        const yExtent = extent([startTriangle.v1.y, startTriangle.v2.y, startTriangle.v3.y]);
+        const [xmin, xmax] = xExtent;
+        const [ymin, ymax] = yExtent;
+        if(xmin === undefined || xmax === undefined || ymin === undefined || ymax === undefined)
+            throw new Error('Unable to determine start triangle bounds');
+        radius = randomUniform(width/1000, width/8)();
+        let rTries = 5;
+        let found = false;
+        let currentCenter: Vector | null = null;
         do {
-            let xrand = randomUniform(xmin + r, xmax - r),
-                yrand = randomUniform(ymin + r, ymax - r);
-            let c_tries = 10;
+            const xrand = randomUniform(xmin + radius, xmax - radius);
+            const yrand = randomUniform(ymin + radius, ymax - radius);
+            let cTries = 10;
             do {
-                center = new Vector(xrand(), yrand());
-                polygon = regularPolygon(center, r, boundsShape);
-                found = polygon.every(pt => startri.pointInside(pt));
-            } while(--c_tries && !found);
+                const candidateCenter = new Vector(xrand(), yrand());
+                const candidatePolygon = regularPolygon(candidateCenter, radius, boundsShape);
+                found = candidatePolygon.every(pt => startTriangle.pointInside(pt));
+                if(found) {
+                    currentCenter = candidateCenter;
+                    polygon = candidatePolygon;
+                    break;
+                }
+            } while(--cTries && !found);
             if(!found)
-                r /= 2;
+                radius /= 2;
         }
-        while(--r_tries && !found)
-        if(!r_tries) {
-            console.log("couldn't find polygon of radius", r, "inside", startri.v1.print(), startri.v2.print(), startri.v3.print());
+        while(--rTries && !found);
+        if(!found || !currentCenter) {
+            console.log(
+                "couldn't find polygon of radius",
+                radius,
+                'inside',
+                startTriangle.v1.print(),
+                startTriangle.v2.print(),
+                startTriangle.v3.print()
+            );
             throw new Error("Couldn't find polygon inside triangle");
         }
+        tilingCenter = currentCenter;
+        if(!polygon.length)
+            throw new Error('Polygon generation failed');
     }
     const polyTris = triangulate(polygon);
 
-    console.assert(!isNaN(minTiles));
-    var discarded;
+    console.assert(!Number.isNaN(minTiles));
+    let triangles: TathamTriangleType[] = [startTriangle];
+    let discarded: TathamTriangleType[] = [];
     [triangles, discarded] = generateTriangles(
         triangles,
         tri => polyTris.some(ptri => trianglesIntersect(ptri, tri)),
-        tris => tris.length / 2 > minTiles);
+        tris => tris.length / 2 > minTiles
+    );
 
-    let trihash = {};
-    for(var t of triangles)
+    const trihash: Record<string, TathamTriangleType> = {};
+    for (const t of triangles)
         trihash[t.coord] = t;
-    const disind = [];
-    const find_tris = [];
-    for(var [i, t] of triangles.entries()) {
-        var oh = tatham_neighbor_or_null(t.coord, 0);
-        var t2;
-        if(!oh || !(t2 = trihash[oh])) {
-            if(resolveRagged === "cull")
+    const disind: number[] = [];
+    const find_tris: string[] = [];
+    for (const [i, t] of triangles.entries()) {
+        const oh = tatham_neighbor_or_null(t.coord, 0);
+        const neighbor = oh ? trihash[oh] : undefined;
+        if(!oh || !neighbor) {
+            if(resolveRagged === 'cull')
                 disind.push(i);
-            else if(resolveRagged === "fill") {
-                var nei1 = tatham_neighbor_or_null(t.coord, 1),
-                    nei2 = tatham_neighbor_or_null(t.coord, 2);
+            else if(resolveRagged === 'fill') {
+                const nei1 = tatham_neighbor_or_null(t.coord, 1);
+                const nei2 = tatham_neighbor_or_null(t.coord, 2);
                 if(oh && nei1 && nei2 && trihash[nei1] && trihash[nei2])
                     find_tris.push(oh);
                 else
@@ -419,12 +501,13 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
             }
         }
     }
-    var found_tris : TriangleLike = [];
+    let found_tris: TathamTriangleType[] = [];
     if(find_tris.length) {
         [found_tris] = generateTriangles(
-            [startri],
+            [startTriangle],
             tri => find_tris.some(find => find.endsWith(tri.coord)),
-            tris => !tris.length || tris[0].coord.length === find_tris[0].length);
+            tris => !tris.length || tris[0].coord.length === find_tris[0].length
+        );
         if(found_tris.length < find_tris.length) {
             console.log('did not find other halves of all sought triangles:');
             console.log('sought', find_tris);
@@ -434,95 +517,88 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
             trihash[tri.coord] = tri;
         triangles.push(...found_tris);
     }
-    triangles = triangles.map(toLegacyTriangle);
-    discarded = discarded.map(toLegacyTriangle);
-    trihash = {};
-    for(var t of triangles)
-        trihash[t.coord] = t;
-    const rhombhash = {};
-    const tri2rhomb = {};
-    for(var [_, t] of triangles.entries()) {
-        var oh = tatham_neighbor_or_null(t.coord, 0);
-        var t2;
-        if(oh && (t2 = trihash[oh])) {
+    const legacyTriangles: Triangle[] = triangles.map(toLegacyTriangle);
+    const legacyDiscarded = discarded.map(toLegacyTriangle);
+    const legacyFillsFound = found_tris.map(toLegacyTriangle);
+    const legacyTrihash: Record<string, Triangle> = {};
+    for(const tri of legacyTriangles)
+        legacyTrihash[tri.coord] = tri;
+    const rhombhash: Record<string, RhombHashEntry> = {};
+    const tri2rhomb: Record<string, string> = {};
+    for(const t of legacyTriangles) {
+        const oh = tatham_neighbor_or_null(t.coord, 0);
+        const t2 = oh ? legacyTrihash[oh] : undefined;
+        if(oh && t2) {
             const rhombcoord = [t.coord, oh].sort().join(',');
             if(rhombhash[rhombcoord])
                 continue;
-            else {
-                // things that are arbitrary / not thought out here
-                // original triangles are not using tatham side convention (see ll134-8)
-                // there are two ways to choose the points from the triangles
-                // this code is not using the sorted order of the triangles
-                // that is used for the rhombcoord above
-
-                // right away right here we need to
-                //   * calculate the base and flip
-                //   * rationalize the triangle
-                //   * pull correct sides from triangles for base and flip
-                // there can be tables that say from this base, flip, and rhomb side
-                // you will get tri 1 or 2 and side 1 or 2
-                // below neighbor calc use same
-                // scale is unaffected
-                // or since scale is needed for key and base/flip, maybe calculate everything at once here
-
-                tri2rhomb[t.coord] = rhombcoord;
-                tri2rhomb[oh] = rhombcoord;
-                const fillColor = (find_tris.includes(t.coord) || find_tris.includes(oh)) ?
-                      lighten(t.fillColor) : t.fillColor;
-                const rhombus = new Rhombus(t.v1, t.v2, t2.v1, t2.v2, rhombcoord, fillColor);
-                rhombhash[rhombcoord] = {
-                    rhombus,
-                    tri1: t,
-                    tri2: t2
-                };
-            }
+            tri2rhomb[t.coord] = rhombcoord;
+            tri2rhomb[oh] = rhombcoord;
+            const fillColor = (find_tris.includes(t.coord) || find_tris.includes(oh)) ?
+                  lighten(t.fillColor) : t.fillColor;
+            const rhombus = new Rhombus(t.v1, t.v2, t2.v1, t2.v2, rhombcoord, fillColor);
+            rhombhash[rhombcoord] = {
+                rhombus,
+                tri1: t,
+                tri2: t2,
+                neighbors: [null, null, null, null],
+                base: null
+            };
         }
     }
-    const culledTris = [];
-    for(i = disind.length - 1; i >= 0; i--) {
-        culledTris.push(triangles[disind[i]]);
-        triangles.splice(disind[i], 1);
+    const culledTris: Triangle[] = [];
+    for(let i = disind.length - 1; i >= 0; i--) {
+        const index = disind[i];
+        if(index >= 0 && index < legacyTriangles.length) {
+            culledTris.push(legacyTriangles[index]);
+            legacyTriangles.splice(index, 1);
+        }
     }
-    for(const [rhombcoord, {tri1, tri2, rhombus}] of Object.entries(rhombhash)) {
-        const neighbors = [];
-        var j = 0;
-        // X1, X2, Y1, Y2 or C1, C2, D1, D2
+    for(const [rhombcoord, {tri1, tri2}] of Object.entries(rhombhash)) {
+        const neighbors: Array<string | null> = [];
         for(const tri of [tri1, tri2])
-            for(const side of [1, 2]) {
-                var nei = tatham_neighbor_or_null(tri.coord, side);
-                const rhombnei = nei && tri2rhomb[nei] || null;
+            for(const side of [1, 2] as const) {
+                const nei = tatham_neighbor_or_null(tri.coord, side);
+                const rhombnei = nei ? tri2rhomb[nei] ?? null : null;
                 neighbors.push(rhombnei);
             }
         rhombhash[rhombcoord].neighbors = neighbors;
     }
-    const culledRhombs = [];
-    if(resolveRagged === "cull") {
-        var cullRhombs;
+    const culledRhombs: Rhombus[] = [];
+    if(resolveRagged === 'cull') {
+        let cullRhombs: RhombHashEntry[] = [];
         do {
             cullRhombs = Object.values(rhombhash)
-                .filter(({neighbors}) => neighbors.filter(n => n).length < 2);
+                .filter(({neighbors}) => neighbors.filter((n): n is string => Boolean(n)).length < 2);
             for(const {rhombus, neighbors} of cullRhombs) {
                 culledRhombs.push(rhombus);
-                for(nei of neighbors) {
+                for(const nei of neighbors) {
                     if(!nei)
                         continue;
                     const entry = rhombhash[nei];
-                    for(const i of range(4))
-                        if(entry.neighbors[i] === rhombus.coord)
-                            entry.neighbors[i] = null;
+                    if(!entry)
+                        continue;
+                    for(const idx of range(4))
+                        if(entry.neighbors[idx] === rhombus.coord)
+                            entry.neighbors[idx] = null;
                 }
                 delete rhombhash[rhombus.coord];
             }
         }
         while(cullRhombs.length);
     }
-    discarded.concat(culledTris).forEach(tri => tri.fillColor = 'none');
-    const elengths = [];
+    legacyDiscarded.concat(culledTris).forEach(tri => tri.fillColor = 'none');
+    const elengths: number[] = [];
     for(const {rhombus: rh} of Object.values(rhombhash))
-        for(const [v1, v2] of [[rh.v1,rh.v2], [rh.v2,rh.v3], [rh.v3, rh.v4], [rh.v4, rh.v1]])
+        for(const [v1, v2] of [[rh.v1,rh.v2], [rh.v2,rh.v3], [rh.v3, rh.v4], [rh.v4, rh.v1]] as const)
             elengths.push(Math.hypot(v2.x - v1.x, v2.y - v1.y));
     const meanEdgeLength = mean(elengths);
-    const {tl, br} = calculateRhombusesBB(Object.values(rhombhash).map(({rhombus}) => rhombus));
+    if(meanEdgeLength === undefined)
+        throw new Error('Unable to determine mean edge length');
+    const rhombuses = Object.values(rhombhash).map(({rhombus}) => rhombus);
+    if(!rhombuses.length)
+        throw new Error('No rhombuses generated');
+    const {tl, br} = calculateRhombusesBB(rhombuses);
     const scale = scaleVector(tl, 1/meanEdgeLength);
     for(const rhombus of Object.values(rhombhash)) {
         const {rhombus: rh, tri1, tri2} = rhombus;
@@ -535,50 +611,58 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
             scale(tri1.v1),
             scale(tri1.v2),
             scale(tri1.v3),
-            tri1.coord
+            tri1.coord,
+            tri1.fillColor
         );
 
         rhombus.tri2scale = new Triangle(
             scale(tri2.v1),
             scale(tri2.v2),
             scale(tri2.v3),
-            tri2.coord
+            tri2.coord,
+            tri2.fillColor
         );
     }
-    const rray = [];
-    for(const {rhombus: rh} of Object.values(rhombhash)) {
+    for(const entry of Object.values(rhombhash)) {
+        const rh = entry.rhombus;
         const cx = (rh.v1.x + rh.v3.x) / 2,
               cy = (rh.v1.y + rh.v3.y) / 2,
               cx2 = (rh.v2.x + rh.v4.x) / 2,
               cy2 = (rh.v2.y + rh.v4.y) / 2;
-        console.assert(Math.abs(cx - cx2) < 1); // this seems incredibly loose if the rhombs are already scaled
+        console.assert(Math.abs(cx - cx2) < 1);
         console.assert(Math.abs(cy - cy2) < 1);
-        rhombhash[rh.coord].center = new Vector(cx, cy);
-        var vs = [
+        entry.center = new Vector(cx, cy);
+        const vs: RhombusVectors = [
             new Vector(rh.v1.x - cx, rh.v1.y - cy),
             new Vector(rh.v2.x - cx, rh.v2.y - cy),
             new Vector(rh.v3.x - cx, rh.v3.y - cy),
-            new Vector(rh.v4.x - cx, rh.v4.y - cy)];
-        rhombhash[rh.coord].key = rhomb_key(vs);
+            new Vector(rh.v4.x - cx, rh.v4.y - cy)
+        ];
+        entry.key = rhomb_key(vs);
     }
 
-    const key_to_base = {};
-    const base_to_key = [];
+    const key_to_base: Record<string, number> = {};
+    const base_to_key: string[] = [];
     for(const [i, rh] of base_rhombuses.entries()) {
         const key = rhomb_key(rh);
         key_to_base[key] = i;
         base_to_key.push(key);
     }
-    const not_found = new Set(),
-          bases_found = new Set();
+    const not_found = new Set<string>(),
+          bases_found = new Set<number>();
     for(const rhombdef of Object.values(rhombhash)) {
-        const base = key_to_base[rhombdef.key];
+        const key = rhombdef.key;
+        if(!key) {
+            rhombdef.base = null;
+            continue;
+        }
+        const base = key_to_base[key];
         if(base !== undefined) {
             bases_found.add(base);
             rhombdef.base = base;
         }
         else {
-            not_found.add(rhombdef.key);
+            not_found.add(key);
             rhombdef.base = null;
         }
     }
@@ -586,18 +670,19 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
         console.log('not found', nf);
     for(const base of range(10))
         if(!bases_found.has(base))
-            console.log('unused', base, base_to_key[base]);
+            console.log('unused', base, base_to_key[base] ?? 'unknown');
     
     return {
-        center, r,
+        center: tilingCenter,
+        r: radius,
         polygon,
-        robinsonTriangles: triangles,
-        discardedTriangles: discarded,
+        robinsonTriangles: legacyTriangles,
+        discardedTriangles: legacyDiscarded,
         culledTriangles: culledTris,
         p3Rhombuses: rhombhash,
         culledRhombuses: culledRhombs,
         fillsIdentified: find_tris,
-        fillsFound: found_tris,
+        fillsFound: legacyFillsFound,
         rhombBases: range(10),
         scaleFunction: scale
     };

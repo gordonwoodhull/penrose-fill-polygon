@@ -37,7 +37,7 @@ export declare class Triangle implements TriangleLike {
     pointInside(pt: Vector): boolean;
     center(): Vector;
     side(i: 0 | 1 | 2): [Vector, Vector] | null;
-    split(): TriangleLike[];
+    split(): Triangle[];
 }
 export declare class TriangleC extends Triangle {
     constructor(v1: Vector, v2: Vector, v3: Vector, coord: string);

@@ -1,4 +1,32 @@
-import { Vector, Triangle, TriangleC, TriangleD, TriangleX, TriangleY, type Point, type TriangleLike } from './geometry';
+import { Vector, Triangle, type Point } from './geometry';
+type TriangleKind = 'C' | 'D' | 'X' | 'Y';
+type BoundsShape = 'square' | 'pentagon' | 'hexagon';
+type ResolveRaggedMode = 'none' | 'cull' | 'fill';
+interface RhombHashEntry {
+    rhombus: Rhombus;
+    tri1: Triangle;
+    tri2: Triangle;
+    neighbors: Array<string | null>;
+    tri1scale?: Triangle;
+    tri2scale?: Triangle;
+    center?: Vector;
+    key?: string;
+    base: number | null;
+}
+export interface PenroseTilingResult {
+    center: Vector;
+    r: number;
+    polygon: Vector[];
+    robinsonTriangles: Triangle[];
+    discardedTriangles: Triangle[];
+    culledTriangles: Triangle[];
+    p3Rhombuses: Record<string, RhombHashEntry>;
+    culledRhombuses: Rhombus[];
+    fillsIdentified: string[];
+    fillsFound: Triangle[];
+    rhombBases: number[];
+    scaleFunction: (vector: Vector) => Vector;
+}
 export { GOLDEN_RATIO, Vector, Triangle, TriangleC, TriangleD, TriangleX, TriangleY, trianglesIntersect, triangleListsIntersect, average_vectors, interpolate_vectors } from './geometry';
 export declare class Rhombus {
     v1: Vector;
@@ -20,31 +48,19 @@ export declare class Rhombus {
         fillColor: string;
     }): Rhombus;
 }
-export declare function tatham_neighbor(coord: string, side: 0 | 1 | 2): [string, number];
+export declare function tatham_neighbor(coord: string, side: 0 | 1 | 2): [string, 0 | 1 | 2];
 export declare function tatham_neighbor_or_null(coord: string, side: 0 | 1 | 2): string | null;
-export declare function calculateBaseRhombuses(): Vector[][];
-export declare const truncate_float: (prec: any) => (x: any) => any;
-export declare function rhomb_key(vs: any, prec?: number): any;
-export declare function calculateTrianglesBB(tris: any): {
+export declare function calculateBaseRhombuses(): RhombusVectors[];
+export declare const truncate_float: (prec: number) => (x: number) => string;
+type RhombusVectors = [Vector, Vector, Vector, Vector];
+export declare function rhomb_key(vs: Rhombus | RhombusVectors, prec?: number): string;
+export declare function calculateTrianglesBB(tris: Triangle[]): {
     tl: Vector;
     br: Vector;
 };
-export declare function calculateRhombusesBB(rhombs: any): {
+export declare function calculateRhombusesBB(rhombs: Rhombus[]): {
     tl: Vector;
     br: Vector;
 };
-export declare function scaleVector(tl: any, scale: any): (v: any) => Vector;
-export declare function calculatePenroseTiling(minTiles: any, width: any, height: any, boundsShape: any, startTile: any, resolveRagged: any, center: any, r: any): {
-    center: any;
-    r: any;
-    polygon: Vector[];
-    robinsonTriangles: any[];
-    discardedTriangles: (TriangleC | TriangleY | TriangleD | TriangleX)[];
-    culledTriangles: any[];
-    p3Rhombuses: {};
-    culledRhombuses: any[];
-    fillsIdentified: string[];
-    fillsFound: TriangleLike;
-    rhombBases: number[];
-    scaleFunction: (v: any) => Vector;
-};
+export declare function scaleVector(tl: Vector, scale: number): (v: Vector) => Vector;
+export declare function calculatePenroseTiling(minTiles: number, width: number, height: number, boundsShape: BoundsShape, startTile: TriangleKind, resolveRagged: ResolveRaggedMode, center?: Vector | null, r?: number | null): PenroseTilingResult;

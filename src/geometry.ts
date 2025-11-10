@@ -97,7 +97,7 @@ export class Triangle implements TriangleLike {
             null;
     }
 
-    split(): TriangleLike[] {
+    split(): Triangle[] {
         return [];
     }
 }

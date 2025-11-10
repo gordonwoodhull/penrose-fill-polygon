@@ -8,7 +8,9 @@ import {
     TriangleY
 } from './geometry';
 
-function splitPoint(a, b) {
+type StartVertices = {v1: Vector; v2: Vector; v3: Vector};
+
+function splitPoint(a: Vector, b: Vector): Vector {
     return new Vector(
         a.x + (b.x - a.x) * GOLDEN_RATIO,
         a.y + (b.y - a.y) * GOLDEN_RATIO
@@ -18,7 +20,7 @@ function splitPoint(a, b) {
 const DEG = Math.PI / 180;
 const ROBINSON_RATIO = Math.sin(36 * DEG) / Math.sin(54 * DEG);
 
-function createCDStartVertices(width, height) {
+function createCDStartVertices(width: number, height: number): StartVertices {
     const hei = Math.min(width * ROBINSON_RATIO, height);
     const halfBase = hei / (2 * ROBINSON_RATIO);
     return {
@@ -28,7 +30,7 @@ function createCDStartVertices(width, height) {
     };
 }
 
-function createXYStartVertices(width, height) {
+function createXYStartVertices(width: number, height: number): StartVertices {
     const hei = Math.min((width / 2) * ROBINSON_RATIO, height);
     const offset = hei / ROBINSON_RATIO;
     return {
@@ -39,22 +41,22 @@ function createXYStartVertices(width, height) {
 }
 
 class TathamTriangle extends Triangle {
-    constructor(v1, v2, v3, coord, fillColor) {
+    constructor(v1: Vector, v2: Vector, v3: Vector, coord: string, fillColor: string) {
         super(v1, v2, v3, coord, fillColor);
     }
 }
 
 export class TathamTriangleC extends TathamTriangle {
-    constructor(v1, v2, v3, coord) {
+    constructor(v1: Vector, v2: Vector, v3: Vector, coord: string) {
         super(v1, v2, v3, coord, 'blue');
     }
 
-    static startTile(width, height) {
+    static startTile(width: number, height: number): TathamTriangleC {
         const {v1, v2, v3} = createCDStartVertices(width, height);
         return new TathamTriangleC(v1, v2, v3, 'C');
     }
 
-    split() {
+    split(): TathamTriangle[] {
         const split1 = splitPoint(this.v3, this.v2);
         return [
             new TathamTriangleC(this.v2, split1, this.v1, 'C' + this.coord),
@@ -64,16 +66,16 @@ export class TathamTriangleC extends TathamTriangle {
 }
 
 export class TathamTriangleD extends TathamTriangle {
-    constructor(v1, v2, v3, coord) {
+    constructor(v1: Vector, v2: Vector, v3: Vector, coord: string) {
         super(v1, v2, v3, coord, 'blue');
     }
 
-    static startTile(width, height) {
+    static startTile(width: number, height: number): TathamTriangleD {
         const {v1, v2, v3} = createCDStartVertices(width, height);
         return new TathamTriangleD(v1, v2, v3, 'D');
     }
 
-    split() {
+    split(): TathamTriangle[] {
         const split2 = splitPoint(this.v3, this.v1);
         return [
             new TathamTriangleD(split2, this.v1, this.v2, 'D' + this.coord),
@@ -83,16 +85,16 @@ export class TathamTriangleD extends TathamTriangle {
 }
 
 export class TathamTriangleX extends TathamTriangle {
-    constructor(v1, v2, v3, coord) {
+    constructor(v1: Vector, v2: Vector, v3: Vector, coord: string) {
         super(v1, v2, v3, coord, 'red');
     }
 
-    static startTile(width, height) {
+    static startTile(width: number, height: number): TathamTriangleX {
         const {v1, v2, v3} = createXYStartVertices(width, height);
         return new TathamTriangleX(v1, v2, v3, 'X');
     }
 
-    split() {
+    split(): TathamTriangle[] {
         const split0 = splitPoint(this.v1, this.v2);
         const split2 = splitPoint(this.v1, this.v3);
         return [
@@ -104,16 +106,16 @@ export class TathamTriangleX extends TathamTriangle {
 }
 
 export class TathamTriangleY extends TathamTriangle {
-    constructor(v1, v2, v3, coord) {
+    constructor(v1: Vector, v2: Vector, v3: Vector, coord: string) {
         super(v1, v2, v3, coord, 'red');
     }
 
-    static startTile(width, height) {
+    static startTile(width: number, height: number): TathamTriangleY {
         const {v1, v2, v3} = createXYStartVertices(width, height);
         return new TathamTriangleY(v1, v2, v3, 'Y');
     }
 
-    split() {
+    split(): TathamTriangle[] {
         const split0 = splitPoint(this.v2, this.v1);
         const split1 = splitPoint(this.v2, this.v3);
         return [
@@ -124,7 +126,7 @@ export class TathamTriangleY extends TathamTriangle {
     }
 }
 
-export function toLegacyTriangle(triangle) {
+export function toLegacyTriangle(triangle: TathamTriangleC | TathamTriangleD | TathamTriangleX | TathamTriangleY): Triangle {
     if(triangle instanceof TathamTriangleC)
         return new TriangleC(triangle.v3, triangle.v2, triangle.v1, triangle.coord);
     if(triangle instanceof TathamTriangleD)
