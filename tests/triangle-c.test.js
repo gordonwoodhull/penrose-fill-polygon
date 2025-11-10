@@ -1,13 +1,9 @@
 import {describe, it, expect} from 'vitest';
 import {TriangleC, Vector} from '../src/index.ts';
 import {TathamTriangleC, toLegacyTriangle} from '../src/tatham-triangle.js';
+import {expectVectorClose} from './utils.js';
 
 const GOLDEN_RATIO = 0.6180339887498948;
-
-const expectVectorClose = (actual, expected, digits = 12) => {
-    expect(actual.x).toBeCloseTo(expected.x, digits);
-    expect(actual.y).toBeCloseTo(expected.y, digits);
-};
 
 function makeTriangleC() {
     // Matches the orientation produced by calculatePenroseTiling for start tile C.
@@ -29,16 +25,16 @@ function makeTathamTriangleC() {
 }
 
 const implementations = [
-    {
-        label: 'legacy TriangleC',
-        setup: () => {
+    [
+        'legacy TriangleC',
+        () => {
             const parent = makeTriangleC();
             return {parent, children: parent.split()};
         }
-    },
-    {
-        label: 'TathamTriangleC via toLegacyTriangle',
-        setup: () => {
+    ],
+    [
+        'TathamTriangleC via toLegacyTriangle',
+        () => {
             const parentT = makeTathamTriangleC();
             const childrenT = parentT.split();
             return {
@@ -46,10 +42,10 @@ const implementations = [
                 children: childrenT.map(toLegacyTriangle)
             };
         }
-    }
+    ]
 ];
 
-describe.each(implementations)('$label', ({setup}) => {
+describe.each(implementations)('%s', (_, setup) => {
     it('emits child triangles with the existing v1/v2/v3 order', () => {
         const {parent, children} = setup();
         const [childC, childY] = children;

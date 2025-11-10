@@ -371,10 +371,8 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
         triangles,
         tri => polyTris.some(ptri => trianglesIntersect(ptri, tri)),
         tris => tris.length / 2 > minTiles);
-    triangles = triangles.map(toLegacyTriangle);
-    discarded = discarded.map(toLegacyTriangle);
 
-    const trihash = {};
+    let trihash = {};
     for(var t of triangles)
         trihash[t.coord] = t;
     const disind = [];
@@ -410,6 +408,11 @@ export function calculatePenroseTiling(minTiles, width, height, boundsShape, sta
             trihash[tri.coord] = tri;
         triangles.push(...found_tris);
     }
+    triangles = triangles.map(toLegacyTriangle);
+    discarded = discarded.map(toLegacyTriangle);
+    trihash = {};
+    for(var t of triangles)
+        trihash[t.coord] = t;
     const rhombhash = {};
     const tri2rhomb = {};
     for(var [i, t] of triangles.entries()) {

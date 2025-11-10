@@ -8,8 +8,12 @@ import {
     TriangleY
 } from './geometry';
 
-const splitPoint = (start, end) =>
-    start.add(Vector.fromPoints(start, end).multiply(GOLDEN_RATIO));
+function splitPoint(a, b) {
+    return new Vector(
+        a.x + (b.x - a.x) * GOLDEN_RATIO,
+        a.y + (b.y - a.y) * GOLDEN_RATIO
+    );
+}
 
 const DEG = Math.PI / 180;
 const ROBINSON_RATIO = Math.sin(36 * DEG) / Math.sin(54 * DEG);
@@ -18,9 +22,9 @@ function createCDStartVertices(width, height) {
     const hei = Math.min(width * ROBINSON_RATIO, height);
     const halfBase = hei / (2 * ROBINSON_RATIO);
     return {
-        v1: new Vector(width / 2 - halfBase, hei / 2),
+        v1: new Vector(width / 2 + halfBase, hei),
         v2: new Vector(width / 2 + halfBase, 0),
-        v3: new Vector(width / 2 + halfBase, hei)
+        v3: new Vector(width / 2 - halfBase, hei / 2)
     };
 }
 
@@ -28,9 +32,9 @@ function createXYStartVertices(width, height) {
     const hei = Math.min((width / 2) * ROBINSON_RATIO, height);
     const offset = hei / ROBINSON_RATIO;
     return {
-        v1: new Vector(width / 2, 0),
+        v1: new Vector(width / 2 - offset, hei),
         v2: new Vector(width / 2 + offset, hei),
-        v3: new Vector(width / 2 - offset, hei)
+        v3: new Vector(width / 2, 0)
     };
 }
 
@@ -51,10 +55,10 @@ export class TathamTriangleC extends TathamTriangle {
     }
 
     split() {
-        const split12 = splitPoint(this.v1, this.v2);
+        const split1 = splitPoint(this.v3, this.v2);
         return [
-            new TathamTriangleC(this.v3, split12, this.v2, 'C' + this.coord),
-            new TathamTriangleY(split12, this.v3, this.v1, 'Y' + this.coord)
+            new TathamTriangleC(this.v2, split1, this.v1, 'C' + this.coord),
+            new TathamTriangleY(this.v3, this.v1, split1, 'Y' + this.coord)
         ];
     }
 }
@@ -70,10 +74,10 @@ export class TathamTriangleD extends TathamTriangle {
     }
 
     split() {
-        const split13 = splitPoint(this.v1, this.v3);
+        const split2 = splitPoint(this.v3, this.v1);
         return [
-            new TathamTriangleD(this.v2, this.v3, split13, 'D' + this.coord),
-            new TathamTriangleX(split13, this.v1, this.v2, 'X' + this.coord)
+            new TathamTriangleD(split2, this.v1, this.v2, 'D' + this.coord),
+            new TathamTriangleX(this.v2, this.v3, split2, 'X' + this.coord)
         ];
     }
 }
@@ -89,12 +93,12 @@ export class TathamTriangleX extends TathamTriangle {
     }
 
     split() {
-        const split32 = splitPoint(this.v3, this.v2);
-        const split31 = splitPoint(this.v3, this.v1);
+        const split0 = splitPoint(this.v1, this.v2);
+        const split2 = splitPoint(this.v1, this.v3);
         return [
-            new TathamTriangleY(split31, split32, this.v3, 'Y' + this.coord),
-            new TathamTriangleC(split32, split31, this.v1, 'C' + this.coord),
-            new TathamTriangleX(split32, this.v1, this.v2, 'X' + this.coord)
+            new TathamTriangleY(this.v1, split0, split2, 'Y' + this.coord),
+            new TathamTriangleC(this.v3, split2, split0, 'C' + this.coord),
+            new TathamTriangleX(this.v2, this.v3, split0, 'X' + this.coord)
         ];
     }
 }
@@ -106,28 +110,28 @@ export class TathamTriangleY extends TathamTriangle {
 
     static startTile(width, height) {
         const {v1, v2, v3} = createXYStartVertices(width, height);
-        return new TathamTriangleY(v1, v3, v2, 'Y');
+        return new TathamTriangleY(v1, v2, v3, 'Y');
     }
 
     split() {
-        const split21 = splitPoint(this.v2, this.v1);
-        const split23 = splitPoint(this.v2, this.v3);
+        const split0 = splitPoint(this.v2, this.v1);
+        const split1 = splitPoint(this.v2, this.v3);
         return [
-            new TathamTriangleY(split23, this.v3, this.v1, 'Y' + this.coord),
-            new TathamTriangleD(split23, this.v1, split21, 'D' + this.coord),
-            new TathamTriangleX(split21, this.v2, split23, 'X' + this.coord)
+            new TathamTriangleY(this.v3, this.v1, split0, 'Y' + this.coord),
+            new TathamTriangleD(split1, this.v3, split0, 'D' + this.coord),
+            new TathamTriangleX(split0, this.v2, split1, 'X' + this.coord)
         ];
     }
 }
 
 export function toLegacyTriangle(triangle) {
     if(triangle instanceof TathamTriangleC)
-        return new TriangleC(triangle.v1, triangle.v2, triangle.v3, triangle.coord);
+        return new TriangleC(triangle.v3, triangle.v2, triangle.v1, triangle.coord);
     if(triangle instanceof TathamTriangleD)
-        return new TriangleD(triangle.v1, triangle.v2, triangle.v3, triangle.coord);
+        return new TriangleD(triangle.v3, triangle.v2, triangle.v1, triangle.coord);
     if(triangle instanceof TathamTriangleX)
-        return new TriangleX(triangle.v1, triangle.v2, triangle.v3, triangle.coord);
+        return new TriangleX(triangle.v3, triangle.v2, triangle.v1, triangle.coord);
     if(triangle instanceof TathamTriangleY)
-        return new TriangleY(triangle.v1, triangle.v2, triangle.v3, triangle.coord);
+        return new TriangleY(triangle.v3, triangle.v2, triangle.v1, triangle.coord);
     throw new Error('Unsupported triangle supplied to toLegacyTriangle');
 }

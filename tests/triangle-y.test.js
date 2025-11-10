@@ -1,13 +1,9 @@
 import {describe, it, expect} from 'vitest';
 import {TriangleY, Vector} from '../src/index.ts';
 import {TathamTriangleY, toLegacyTriangle} from '../src/tatham-triangle.js';
+import {expectVectorClose} from './utils.js';
 
 const GOLDEN_RATIO = 0.6180339887498948;
-
-const expectVectorClose = (actual, expected, digits = 12) => {
-    expect(actual.x).toBeCloseTo(expected.x, digits);
-    expect(actual.y).toBeCloseTo(expected.y, digits);
-};
 
 function makeTriangleY() {
     return new TriangleY(
@@ -28,16 +24,16 @@ function makeTathamTriangleY() {
 }
 
 const implementations = [
-    {
-        label: 'legacy TriangleY',
-        setup: () => {
+    [
+        'legacy TriangleY',
+        () => {
             const parent = makeTriangleY();
             return {parent, children: parent.split()};
         }
-    },
-    {
-        label: 'TathamTriangleY via toLegacyTriangle',
-        setup: () => {
+    ],
+    [
+        'TathamTriangleY via toLegacyTriangle',
+        () => {
             const parentT = makeTathamTriangleY();
             const childrenT = parentT.split();
             return {
@@ -45,10 +41,10 @@ const implementations = [
                 children: childrenT.map(toLegacyTriangle)
             };
         }
-    }
+    ]
 ];
 
-describe.each(implementations)('$label', ({setup}) => {
+describe.each(implementations)('%s', (_, setup) => {
     it('emits child triangles with the existing v1/v2/v3 order', () => {
         const {parent, children} = setup();
         const [childY, childD, childX] = children;
