@@ -1,2 +1,4 @@
 node_modules
-.gitignore
+dist/
+penrose-bundle.js
+penrose-fill-demo.js

@@ -29,10 +29,20 @@
     "npm-watch": "^0.11.0"
   },
   "watch": {
-    "build": "src/index.ts"
+    "build": {
+      "patterns": [
+        "src",
+        "demo"
+      ],
+      "extensions": "ts"
+    }
   },
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --global-name=penroseFillPolygon --outfile=penrose-bundle.js",
+    "clean": "rimraf dist",
+    "build:js": "esbuild src/index.ts --bundle --format=iife --global-name=penroseFillPolygon --outfile=dist/penrose-bundle.js",
+    "build:demo": "esbuild demo/penrose-fill-demo.ts --bundle --format=iife --outfile=dist/penrose-fill-demo.js",
+    "build:types": "dts-bundle-generator --project tsconfig.json --out-file dist/penrose-fill-polygon.d.ts --no-banner src/index.ts",
+    "build": "npm run clean && npm run build:js && npm run build:demo && npm run build:types",
     "typecheck": "tsc",
     "watch": "npm-watch",
     "test": "vitest"
@@ -40,6 +50,8 @@
   "devDependencies": {
     "@types/d3-array": "^3.2.2",
     "@types/d3-random": "^3.0.3",
+    "dts-bundle-generator": "^9.5.1",
+    "rimraf": "^5.0.10",
     "typescript": "^5.9.3",
     "vitest": "^4.0.8"
   }
