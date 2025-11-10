@@ -43,17 +43,26 @@
     "build:types": "dts-bundle-generator --project tsconfig.json --out-file dist/penrose-fill-polygon.d.ts --no-banner src/index.ts",
     "build": "npm run clean && npm run build:js && npm run build:demo && npm run build:types",
     "start": "npm run build && serve .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "typecheck": "tsc",
-    "test": "vitest"
+    "test": "vitest",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@types/d3-array": "^3.2.2",
     "@types/d3-random": "^3.0.3",
     "dts-bundle-generator": "^9.5.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.6",
     "npm-watch": "^0.11.0",
+    "prettier": "^3.6.2",
     "rimraf": "^5.0.10",
     "serve": "^14.2.5",
     "typescript": "^5.9.3",
     "vitest": "^4.0.8"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,cjs,mjs,json,md,css,html,svg,yml,yaml}": "prettier --write"
   }
 }
