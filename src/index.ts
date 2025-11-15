@@ -441,11 +441,6 @@ export function calculatePenroseTiling(
     for (const tri of found_tris) trihash[tri.coord] = tri;
     triangles.push(...found_tris);
   }
-  const legacyTriangles: Triangle[] = triangles.map(toLegacyTriangle);
-  const legacyDiscarded = discarded.map(toLegacyTriangle);
-  const legacyFillsFound = found_tris.map(toLegacyTriangle);
-  const legacyTrihash: Record<string, Triangle> = {};
-  for (const tri of legacyTriangles) legacyTrihash[tri.coord] = tri;
   const tathamTrihash: Record<string, TathamTriangleType> = {};
   for (const t of triangles) tathamTrihash[t.coord] = t;
   const rhombhash: Record<string, RhombHashEntry> = {};
@@ -472,19 +467,19 @@ export function calculatePenroseTiling(
       );
       rhombhash[rhombcoord] = {
         rhombus,
-        tri1: legacyTrihash[t.coord],
-        tri2: legacyTrihash[oh],
+        tri1: toLegacyTriangle(t),
+        tri2: toLegacyTriangle(t2),
         neighbors: [null, null, null, null],
         base: null
       };
     }
   }
-  const culledTris: Triangle[] = [];
+  const culledTathamTris: TathamTriangleType[] = [];
   for (let i = disind.length - 1; i >= 0; i--) {
     const index = disind[i];
-    if (index >= 0 && index < legacyTriangles.length) {
-      culledTris.push(legacyTriangles[index]);
-      legacyTriangles.splice(index, 1);
+    if (index >= 0 && index < triangles.length) {
+      culledTathamTris.push(triangles[index]);
+      triangles.splice(index, 1);
     }
   }
   for (const [rhombcoord, { tri1, tri2 }] of Object.entries(rhombhash)) {
@@ -525,7 +520,7 @@ export function calculatePenroseTiling(
       }
     } while (cullRhombs.length);
   }
-  legacyDiscarded.concat(culledTris).forEach((tri) => (tri.fillColor = 'none'));
+  discarded.concat(culledTathamTris).forEach((tri) => (tri.fillColor = 'none'));
   const elengths: number[] = [];
   for (const { rhombus: rh } of Object.values(rhombhash))
     for (const [v1, v2] of [
@@ -587,18 +582,17 @@ export function calculatePenroseTiling(
   for (const base of range(10))
     if (!bases_found.has(base))
       console.log('unused', base, base_to_key[base] ?? 'unknown');
-
   return {
     center: tilingCenter,
     r: radius,
     polygon,
-    robinsonTriangles: legacyTriangles,
-    discardedTriangles: legacyDiscarded,
-    culledTriangles: culledTris,
+    robinsonTriangles: triangles.map(toLegacyTriangle),
+    discardedTriangles: discarded.map(toLegacyTriangle),
+    culledTriangles: culledTathamTris.map(toLegacyTriangle),
     p3Rhombuses: rhombhash,
     culledRhombuses: culledRhombs,
     fillsIdentified: find_tris,
-    fillsFound: legacyFillsFound,
+    fillsFound: found_tris.map(toLegacyTriangle),
     rhombBases: range(10),
     scaleFunction: scale
   };
