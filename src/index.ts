@@ -8,6 +8,7 @@ import {
   TriangleD,
   TriangleX,
   TriangleY,
+  Rhombus,
   trianglesIntersect,
   triangleListsIntersect,
   average_vectors,
@@ -22,6 +23,13 @@ import {
   TathamTriangleY,
   toLegacyTriangle
 } from './tatham-triangle';
+import {
+  base_to_key,
+  rhomb_key,
+  key_to_base,
+  truncate_float,
+  type RhombusVectors
+} from './base-rhombuses';
 
 type TriangleKind = 'C' | 'D' | 'X' | 'Y';
 type BoundsShape = 'square' | 'pentagon' | 'hexagon';
@@ -72,64 +80,18 @@ export {
   TriangleD,
   TriangleX,
   TriangleY,
+  Rhombus,
   trianglesIntersect,
   triangleListsIntersect,
   average_vectors,
   interpolate_vectors
 } from './geometry';
 
-export class Rhombus {
-  constructor(
-    public v1: Vector,
-    public v2: Vector,
-    public v3: Vector,
-    public v4: Vector,
-    public coord: string,
-    public fillColor: string
-  ) {}
-
-  getTriangles(): [Triangle, Triangle] {
-    return [
-      new Triangle(this.v1, this.v2, this.v3, this.coord, this.fillColor),
-      new Triangle(this.v3, this.v4, this.v1, this.coord, this.fillColor)
-    ];
-  }
-
-  getPoints(): [Vector, Vector, Vector, Vector] {
-    return [this.v1, this.v2, this.v3, this.v4];
-  }
-
-  side(i: 0 | 1 | 2 | 3): [Vector, Vector] | null {
-    return i === 0
-      ? [this.v1, this.v2]
-      : i === 1
-        ? [this.v2, this.v3]
-        : i === 2
-          ? [this.v3, this.v4]
-          : i === 3
-            ? [this.v4, this.v1]
-            : null;
-  }
-
-  static fromJson(json: {
-    v1: Point;
-    v2: Point;
-    v3: Point;
-    v4: Point;
-    coord: string;
-    fillColor: string;
-  }): Rhombus {
-    const { v1, v2, v3, v4, coord, fillColor } = json;
-    return new Rhombus(
-      Vector.fromJson(v1),
-      Vector.fromJson(v2),
-      Vector.fromJson(v3),
-      Vector.fromJson(v4),
-      coord,
-      fillColor
-    );
-  }
-}
+export {
+  calculateBaseRhombuses,
+  rhomb_key,
+  truncate_float
+} from './base-rhombuses';
 
 type ExternalNeighbor = { external: true; side: 0 | 1 | 2; hand?: 'l' | 'r' };
 type InternalNeighbor = { prefix: TriangleKind; enter: 0 | 1 | 2 };
@@ -337,72 +299,6 @@ function lighten(color: string): string {
 }
 
 // unit-length edges
-export function calculateBaseRhombuses(): RhombusVectors[] {
-  const TAU = 2 * Math.PI;
-  const cos36_2 = Math.cos(TAU / 10) / 2,
-    sin36_2 = Math.sin(TAU / 10) / 2;
-  const cos72_2 = Math.cos(TAU / 5) / 2,
-    sin72_2 = Math.sin(TAU / 5) / 2;
-  // the easiest rotations to do the trig
-  //      -------
-  //     /     /
-  //    /     /
-  //   -------
-  const rhomb0: RhombusVectors = [
-    new Vector(0.5 - cos72_2, -sin72_2),
-    new Vector(0.5 + cos72_2, sin72_2),
-    new Vector(cos72_2 - 0.5, sin72_2),
-    new Vector(-0.5 - cos72_2, -sin72_2)
-  ];
-  const rhomb9: RhombusVectors = [
-    new Vector(0.5 + cos36_2, sin36_2),
-    new Vector(cos36_2 - 0.5, sin36_2),
-    new Vector(-0.5 - cos36_2, -sin36_2),
-    new Vector(0.5 - cos36_2, -sin36_2)
-  ];
-
-  const rots = [
-    0,
-    TAU / 5,
-    (TAU * 2) / 5,
-    (TAU * 3) / 5,
-    (TAU * 4) / 5,
-    (TAU * 2) / 10,
-    -TAU / 10,
-    (-TAU * 4) / 10,
-    (TAU * 3) / 10,
-    0
-  ];
-  return range(20).map((i) => {
-    // above prototype coords are y increasing upward
-    // we must flip results and reverse order while still starting at apex
-    const rhomb = i % 10 < 5 ? rhomb0 : rhomb9;
-    const rot = i < 10 ? rots[i] : rots[i - 10] + TAU / 2;
-    const rv = rhomb.map(
-      ({ x, y }) =>
-        new Vector(
-          x * Math.cos(rot) - y * Math.sin(rot),
-          -(x * Math.sin(rot) + y * Math.cos(rot))
-        )
-    ) as RhombusVectors;
-    return [rv[0], rv[3], rv[2], rv[1]] as RhombusVectors;
-  });
-}
-let base_rhombuses = calculateBaseRhombuses();
-
-export const truncate_float =
-  (prec: number) =>
-  (x: number): string =>
-    Math.abs(x) < 10 ** -prec ? (0).toFixed(prec) : x.toFixed(prec);
-
-type RhombusVectors = [Vector, Vector, Vector, Vector];
-
-export function rhomb_key(vs: Rhombus | RhombusVectors, prec = 10): string {
-  const vectors: RhombusVectors =
-    vs instanceof Rhombus ? [vs.v1, vs.v2, vs.v3, vs.v4] : vs;
-  const trunc = truncate_float(prec);
-  return vectors.flatMap((v) => [trunc(v.x), trunc(v.y)]).join(',');
-}
 
 export function calculateTrianglesBB(tris: Triangle[]): {
   tl: Vector;
@@ -724,13 +620,6 @@ export function calculatePenroseTiling(
     entry.key = rhomb_key(vs);
   }
 
-  const key_to_base: Record<string, number> = {};
-  const base_to_key: string[] = [];
-  for (const [i, rh] of base_rhombuses.entries()) {
-    const key = rhomb_key(rh);
-    key_to_base[key] = i;
-    base_to_key.push(key);
-  }
   const not_found = new Set<string>(),
     bases_found = new Set<number>();
   for (const rhombdef of Object.values(rhombhash)) {

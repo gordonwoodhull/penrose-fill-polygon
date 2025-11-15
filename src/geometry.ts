@@ -105,6 +105,59 @@ export class Triangle implements TriangleLike {
   }
 }
 
+export class Rhombus {
+  constructor(
+    public v1: Vector,
+    public v2: Vector,
+    public v3: Vector,
+    public v4: Vector,
+    public coord: string,
+    public fillColor: string
+  ) {}
+
+  getTriangles(): [Triangle, Triangle] {
+    return [
+      new Triangle(this.v1, this.v2, this.v3, this.coord, this.fillColor),
+      new Triangle(this.v3, this.v4, this.v1, this.coord, this.fillColor)
+    ];
+  }
+
+  getPoints(): [Vector, Vector, Vector, Vector] {
+    return [this.v1, this.v2, this.v3, this.v4];
+  }
+
+  side(i: 0 | 1 | 2 | 3): [Vector, Vector] | null {
+    return i === 0
+      ? [this.v1, this.v2]
+      : i === 1
+        ? [this.v2, this.v3]
+        : i === 2
+          ? [this.v3, this.v4]
+          : i === 3
+            ? [this.v4, this.v1]
+            : null;
+  }
+
+  static fromJson(json: {
+    v1: Point;
+    v2: Point;
+    v3: Point;
+    v4: Point;
+    coord: string;
+    fillColor: string;
+  }): Rhombus {
+    const { v1, v2, v3, v4, coord, fillColor } = json;
+    return new Rhombus(
+      Vector.fromJson(v1),
+      Vector.fromJson(v2),
+      Vector.fromJson(v3),
+      Vector.fromJson(v4),
+      coord,
+      fillColor
+    );
+  }
+}
+
 // C
 export class TriangleC extends Triangle {
   constructor(v1: Vector, v2: Vector, v3: Vector, coord: string) {
