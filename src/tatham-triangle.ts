@@ -139,13 +139,36 @@ export function toLegacyTriangle(
     | TathamTriangleX
     | TathamTriangleY
 ): Triangle {
+  let legacy: Triangle;
   if (triangle instanceof TathamTriangleC)
-    return new TriangleC(triangle.v3, triangle.v2, triangle.v1, triangle.coord);
-  if (triangle instanceof TathamTriangleD)
-    return new TriangleD(triangle.v3, triangle.v2, triangle.v1, triangle.coord);
-  if (triangle instanceof TathamTriangleX)
-    return new TriangleX(triangle.v3, triangle.v2, triangle.v1, triangle.coord);
-  if (triangle instanceof TathamTriangleY)
-    return new TriangleY(triangle.v3, triangle.v2, triangle.v1, triangle.coord);
-  throw new Error('Unsupported triangle supplied to toLegacyTriangle');
+    legacy = new TriangleC(
+      triangle.v3,
+      triangle.v2,
+      triangle.v1,
+      triangle.coord
+    );
+  else if (triangle instanceof TathamTriangleD)
+    legacy = new TriangleD(
+      triangle.v3,
+      triangle.v2,
+      triangle.v1,
+      triangle.coord
+    );
+  else if (triangle instanceof TathamTriangleX)
+    legacy = new TriangleX(
+      triangle.v3,
+      triangle.v2,
+      triangle.v1,
+      triangle.coord
+    );
+  else if (triangle instanceof TathamTriangleY)
+    legacy = new TriangleY(
+      triangle.v3,
+      triangle.v2,
+      triangle.v1,
+      triangle.coord
+    );
+  else throw new Error('Unsupported triangle supplied to toLegacyTriangle');
+  legacy.fillColor = triangle.fillColor;
+  return legacy;
 }
