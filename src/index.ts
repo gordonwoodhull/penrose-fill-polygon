@@ -446,11 +446,13 @@ export function calculatePenroseTiling(
   const legacyFillsFound = found_tris.map(toLegacyTriangle);
   const legacyTrihash: Record<string, Triangle> = {};
   for (const tri of legacyTriangles) legacyTrihash[tri.coord] = tri;
+  const tathamTrihash: Record<string, TathamTriangleType> = {};
+  for (const t of triangles) tathamTrihash[t.coord] = t;
   const rhombhash: Record<string, RhombHashEntry> = {};
   const tri2rhomb: Record<string, string> = {};
-  for (const t of legacyTriangles) {
+  for (const t of triangles) {
     const oh = tatham_neighbor_or_null(t.coord, 0);
-    const t2 = oh ? legacyTrihash[oh] : undefined;
+    const t2 = oh ? tathamTrihash[oh] : undefined;
     if (oh && t2) {
       const rhombcoord = [t.coord, oh].sort().join(',');
       if (rhombhash[rhombcoord]) continue;
@@ -461,17 +463,17 @@ export function calculatePenroseTiling(
           ? lighten(t.fillColor)
           : t.fillColor;
       const rhombus = new Rhombus(
-        t.v1,
+        t.v3,
         t.v2,
-        t2.v1,
+        t2.v3,
         t2.v2,
         rhombcoord,
         fillColor
       );
       rhombhash[rhombcoord] = {
         rhombus,
-        tri1: t,
-        tri2: t2,
+        tri1: legacyTrihash[t.coord],
+        tri2: legacyTrihash[oh],
         neighbors: [null, null, null, null],
         base: null
       };
