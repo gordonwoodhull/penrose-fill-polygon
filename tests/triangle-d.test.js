@@ -16,7 +16,7 @@ function makeTathamTriangleD() {
 
 describe('TathamTriangleD split', () => {
   it('follows the Tatham vertex ordering', () => {
-    const parent = makeTathamTriangleD();
+    const parent = TathamTriangleD.startTile(100, 200);
     const [childD, childX] = parent.split();
     const splitPoint = new Vector(
       parent.v3.x + (parent.v1.x - parent.v3.x) * GOLDEN_RATIO,

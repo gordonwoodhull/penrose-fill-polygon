@@ -9,18 +9,9 @@ import { expectVectorClose } from './utils.js';
 
 const GOLDEN_RATIO = 0.6180339887498948;
 
-function makeTathamTriangleX() {
-  return new TathamTriangleX(
-    new Vector(0, 0),
-    new Vector(10, 10),
-    new Vector(-10, 10),
-    'X'
-  );
-}
-
 describe('TathamTriangleX split', () => {
   it('follows the Tatham vertex ordering', () => {
-    const parent = makeTathamTriangleX();
+    const parent = TathamTriangleX.startTile(100, 200);
     const [childY, childC, childX] = parent.split();
     const split0 = new Vector(
       parent.v1.x + (parent.v2.x - parent.v1.x) * GOLDEN_RATIO,

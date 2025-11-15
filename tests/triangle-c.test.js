@@ -5,18 +5,9 @@ import { expectVectorClose } from './utils.js';
 
 const GOLDEN_RATIO = 0.6180339887498948;
 
-function makeTathamTriangleC() {
-  return new TathamTriangleC(
-    new Vector(0, 5),
-    new Vector(10, 0),
-    new Vector(10, 10),
-    'C'
-  );
-}
-
 describe('TathamTriangleC split', () => {
   it('preserves the Tatham vertex ordering', () => {
-    const parent = makeTathamTriangleC();
+    const parent = TathamTriangleC.startTile(100, 200);
     const [childC, childY] = parent.split();
     const splitPoint = new Vector(
       parent.v3.x + (parent.v2.x - parent.v3.x) * GOLDEN_RATIO,
