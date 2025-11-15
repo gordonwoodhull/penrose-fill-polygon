@@ -1,4 +1,4 @@
-import { cross, sum } from 'd3-array';
+import { cross, sum, min, max } from 'd3-array';
 
 export type Point = { x: number; y: number };
 
@@ -315,3 +315,53 @@ export const triangleListsIntersect = function (
 ): boolean {
   return cross(As, Bs).some(([A, B]) => trianglesIntersect(A, B));
 };
+
+export function calculateTrianglesBB(tris: Triangle[]): {
+  tl: Vector;
+  br: Vector;
+} {
+  if (!tris.length)
+    throw new Error('Cannot compute bounding box of empty triangle list');
+  const tl = new Vector(
+    min(tris, (tri) => min([tri.v1.x, tri.v2.x, tri.v3.x]) ?? Infinity)!,
+    min(tris, (tri) => min([tri.v1.y, tri.v2.y, tri.v3.y]) ?? Infinity)!
+  );
+  const br = new Vector(
+    max(tris, (tri) => max([tri.v1.x, tri.v2.x, tri.v3.x]) ?? -Infinity)!,
+    max(tris, (tri) => max([tri.v1.y, tri.v2.y, tri.v3.y]) ?? -Infinity)!
+  );
+  return { tl, br };
+}
+
+export function calculateRhombusesBB(rhombs: Rhombus[]): {
+  tl: Vector;
+  br: Vector;
+} {
+  if (!rhombs.length)
+    throw new Error('Cannot compute bounding box of empty rhombus list');
+  const tl = new Vector(
+    min(
+      rhombs,
+      (rhomb) =>
+        min([rhomb.v1.x, rhomb.v2.x, rhomb.v3.x, rhomb.v4.x]) ?? Infinity
+    )!,
+    min(
+      rhombs,
+      (rhomb) =>
+        min([rhomb.v1.y, rhomb.v2.y, rhomb.v3.y, rhomb.v4.y]) ?? Infinity
+    )!
+  );
+  const br = new Vector(
+    max(
+      rhombs,
+      (rhomb) =>
+        max([rhomb.v1.x, rhomb.v2.x, rhomb.v3.x, rhomb.v4.x]) ?? -Infinity
+    )!,
+    max(
+      rhombs,
+      (rhomb) =>
+        max([rhomb.v1.y, rhomb.v2.y, rhomb.v3.y, rhomb.v4.y]) ?? -Infinity
+    )!
+  );
+  return { tl, br };
+}
