@@ -494,6 +494,38 @@ export function calculatePenroseTiling(
       }
     rhombhash[rhombcoord].neighbors = neighbors;
   }
+  for (const entry of Object.values(rhombhash)) {
+    const { rhombus: rh } = entry;
+    const lengths: number[] = [];
+    for (const [v1, v2] of [
+      [rh.v1, rh.v2],
+      [rh.v2, rh.v3],
+      [rh.v3, rh.v4],
+      [rh.v4, rh.v1]
+    ] as const)
+      lengths.push(Math.hypot(v2.x - v1.x, v2.y - v1.y));
+    const localMean = mean(lengths);
+    if (!localMean) {
+      entry.base = null;
+      entry.key = undefined;
+      continue;
+    }
+    const factor = 1 / localMean;
+    const scaled = [rh.v1, rh.v2, rh.v3, rh.v4].map(
+      ({ x, y }) => new Vector(x * factor, y * factor)
+    ) as RhombusVectors;
+    const cx = (scaled[0].x + scaled[2].x) / 2;
+    const cy = (scaled[0].y + scaled[2].y) / 2;
+    const vs: RhombusVectors = [
+      new Vector(scaled[0].x - cx, scaled[0].y - cy),
+      new Vector(scaled[1].x - cx, scaled[1].y - cy),
+      new Vector(scaled[2].x - cx, scaled[2].y - cy),
+      new Vector(scaled[3].x - cx, scaled[3].y - cy)
+    ];
+    entry.key = rhomb_key(vs);
+    const base = key_to_base[entry.key];
+    entry.base = base !== undefined ? base : null;
+  }
   const culledRhombs: Rhombus[] = [];
   if (resolveRagged === 'cull') {
     let cullRhombs: RhombHashEntry[] = [];
@@ -531,7 +563,7 @@ export function calculatePenroseTiling(
     throw new Error('Unable to determine mean edge length');
   const rhombuses = Object.values(rhombhash).map(({ rhombus }) => rhombus);
   if (!rhombuses.length) throw new Error('No rhombuses generated');
-  const { tl, br } = calculateRhombusesBB(rhombuses);
+  const { tl } = calculateRhombusesBB(rhombuses);
   const scale = scaleVector(tl, 1 / meanEdgeLength);
   for (const rhombus of Object.values(rhombhash)) {
     const { rhombus: rh, tri1, tri2 } = rhombus;
@@ -565,31 +597,14 @@ export function calculatePenroseTiling(
     console.assert(Math.abs(cx - cx2) < 1);
     console.assert(Math.abs(cy - cy2) < 1);
     entry.center = new Vector(cx, cy);
-    const vs: RhombusVectors = [
-      new Vector(rh.v1.x - cx, rh.v1.y - cy),
-      new Vector(rh.v2.x - cx, rh.v2.y - cy),
-      new Vector(rh.v3.x - cx, rh.v3.y - cy),
-      new Vector(rh.v4.x - cx, rh.v4.y - cy)
-    ];
-    entry.key = rhomb_key(vs);
   }
 
   const not_found = new Set<string>(),
     bases_found = new Set<number>();
-  for (const rhombdef of Object.values(rhombhash)) {
-    const key = rhombdef.key;
-    if (!key) {
-      rhombdef.base = null;
-      continue;
-    }
-    const base = key_to_base[key];
-    if (base !== undefined) {
-      bases_found.add(base);
-      rhombdef.base = base;
-    } else {
-      not_found.add(key);
-      rhombdef.base = null;
-    }
+  for (const { key, base } of Object.values(rhombhash)) {
+    if (key === undefined) continue;
+    if (base !== null && base !== undefined) bases_found.add(base);
+    else not_found.add(key);
   }
   for (const nf of not_found) console.log('not found', nf);
   for (const base of range(10))
