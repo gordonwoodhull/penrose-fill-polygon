@@ -1,12 +1,4 @@
-import {
-  GOLDEN_RATIO,
-  Vector,
-  Triangle,
-  TriangleC,
-  TriangleD,
-  TriangleX,
-  TriangleY
-} from './geometry';
+import { GOLDEN_RATIO, Vector, Triangle } from './geometry';
 
 type StartVertices = { v1: Vector; v2: Vector; v3: Vector };
 
@@ -130,45 +122,4 @@ export class TathamTriangleY extends TathamTriangle {
       new TathamTriangleX(split0, this.v2, split1, 'X' + this.coord)
     ];
   }
-}
-
-export function toLegacyTriangle(
-  triangle:
-    | TathamTriangleC
-    | TathamTriangleD
-    | TathamTriangleX
-    | TathamTriangleY
-): Triangle {
-  let legacy: Triangle;
-  if (triangle instanceof TathamTriangleC)
-    legacy = new TriangleC(
-      triangle.v3,
-      triangle.v2,
-      triangle.v1,
-      triangle.coord
-    );
-  else if (triangle instanceof TathamTriangleD)
-    legacy = new TriangleD(
-      triangle.v3,
-      triangle.v2,
-      triangle.v1,
-      triangle.coord
-    );
-  else if (triangle instanceof TathamTriangleX)
-    legacy = new TriangleX(
-      triangle.v3,
-      triangle.v2,
-      triangle.v1,
-      triangle.coord
-    );
-  else if (triangle instanceof TathamTriangleY)
-    legacy = new TriangleY(
-      triangle.v3,
-      triangle.v2,
-      triangle.v1,
-      triangle.coord
-    );
-  else throw new Error('Unsupported triangle supplied to toLegacyTriangle');
-  legacy.fillColor = triangle.fillColor;
-  return legacy;
 }

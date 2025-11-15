@@ -477,7 +477,12 @@ export function calculatePenroseTiling(
       triangles.splice(index, 1);
     }
   }
-  for (const [rhombcoord, { tri1, tri2 }] of Object.entries(rhombhash)) {
+  for (const [rhombcoord, entry] of Object.entries(rhombhash)) {
+    const { rhombus, tri1, tri2 } = entry;
+    const vs = unitVectors(rhombus);
+    entry.key = rhomb_key(vs);
+    const base = key_to_base[entry.key];
+    entry.base = base !== undefined ? base : null;
     const neighbors: Array<string | null> = [];
     for (const tri of [tri1, tri2])
       for (const side of [1, 2] as const) {
@@ -486,12 +491,6 @@ export function calculatePenroseTiling(
         neighbors.push(rhombnei);
       }
     rhombhash[rhombcoord].neighbors = neighbors;
-  }
-  for (const entry of Object.values(rhombhash)) {
-    const vs = unitVectors(entry.rhombus);
-    entry.key = rhomb_key(vs);
-    const base = key_to_base[entry.key];
-    entry.base = base !== undefined ? base : null;
   }
   const culledRhombs: Rhombus[] = [];
   if (resolveRagged === 'cull') {
