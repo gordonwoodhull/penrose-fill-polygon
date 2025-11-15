@@ -1,4 +1,4 @@
-import { range } from 'd3-array';
+import { range, mean } from 'd3-array';
 
 import { Vector, Rhombus } from './geometry';
 
@@ -14,6 +14,31 @@ export function rhomb_key(vs: Rhombus | RhombusVectors, prec = 10): string {
     vs instanceof Rhombus ? [vs.v1, vs.v2, vs.v3, vs.v4] : vs;
   const trunc = truncate_float(prec);
   return vectors.flatMap((v) => [trunc(v.x), trunc(v.y)]).join(',');
+}
+
+export function unitVectors(rh: Rhombus): RhombusVectors {
+  const lengths: number[] = [];
+  for (const [v1, v2] of [
+    [rh.v1, rh.v2],
+    [rh.v2, rh.v3],
+    [rh.v3, rh.v4],
+    [rh.v4, rh.v1]
+  ] as const)
+    lengths.push(Math.hypot(v2.x - v1.x, v2.y - v1.y));
+  const localMean = mean(lengths);
+  if (!localMean) return [rh.v1, rh.v2, rh.v3, rh.v4];
+  const factor = 1 / localMean;
+  const scaled = [rh.v1, rh.v2, rh.v3, rh.v4].map(
+    ({ x, y }) => new Vector(x * factor, y * factor)
+  ) as RhombusVectors;
+  const cx = (scaled[0].x + scaled[2].x) / 2;
+  const cy = (scaled[0].y + scaled[2].y) / 2;
+  return [
+    new Vector(scaled[0].x - cx, scaled[0].y - cy),
+    new Vector(scaled[1].x - cx, scaled[1].y - cy),
+    new Vector(scaled[2].x - cx, scaled[2].y - cy),
+    new Vector(scaled[3].x - cx, scaled[3].y - cy)
+  ];
 }
 
 export function calculateBaseRhombuses(): RhombusVectors[] {

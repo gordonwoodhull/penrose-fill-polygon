@@ -30,6 +30,7 @@ import {
   rhomb_key,
   key_to_base,
   truncate_float,
+  unitVectors,
   type RhombusVectors
 } from './base-rhombuses';
 
@@ -495,33 +496,7 @@ export function calculatePenroseTiling(
     rhombhash[rhombcoord].neighbors = neighbors;
   }
   for (const entry of Object.values(rhombhash)) {
-    const { rhombus: rh } = entry;
-    const lengths: number[] = [];
-    for (const [v1, v2] of [
-      [rh.v1, rh.v2],
-      [rh.v2, rh.v3],
-      [rh.v3, rh.v4],
-      [rh.v4, rh.v1]
-    ] as const)
-      lengths.push(Math.hypot(v2.x - v1.x, v2.y - v1.y));
-    const localMean = mean(lengths);
-    if (!localMean) {
-      entry.base = null;
-      entry.key = undefined;
-      continue;
-    }
-    const factor = 1 / localMean;
-    const scaled = [rh.v1, rh.v2, rh.v3, rh.v4].map(
-      ({ x, y }) => new Vector(x * factor, y * factor)
-    ) as RhombusVectors;
-    const cx = (scaled[0].x + scaled[2].x) / 2;
-    const cy = (scaled[0].y + scaled[2].y) / 2;
-    const vs: RhombusVectors = [
-      new Vector(scaled[0].x - cx, scaled[0].y - cy),
-      new Vector(scaled[1].x - cx, scaled[1].y - cy),
-      new Vector(scaled[2].x - cx, scaled[2].y - cy),
-      new Vector(scaled[3].x - cx, scaled[3].y - cy)
-    ];
+    const vs = unitVectors(entry.rhombus);
     entry.key = rhomb_key(vs);
     const base = key_to_base[entry.key];
     entry.base = base !== undefined ? base : null;
