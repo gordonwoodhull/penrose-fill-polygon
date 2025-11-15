@@ -4,10 +4,6 @@ import {
   GOLDEN_RATIO,
   Vector,
   Triangle,
-  TriangleC,
-  TriangleD,
-  TriangleX,
-  TriangleY,
   Rhombus,
   trianglesIntersect,
   triangleListsIntersect,
@@ -22,8 +18,7 @@ import {
   TathamTriangleC,
   TathamTriangleD,
   TathamTriangleX,
-  TathamTriangleY,
-  toLegacyTriangle
+  TathamTriangleY
 } from './tatham-triangle';
 import {
   base_to_key,
@@ -467,8 +462,8 @@ export function calculatePenroseTiling(
       );
       rhombhash[rhombcoord] = {
         rhombus,
-        tri1: toLegacyTriangle(t),
-        tri2: toLegacyTriangle(t2),
+        tri1: t,
+        tri2: t2,
         neighbors: [null, null, null, null],
         base: null
       };
@@ -586,13 +581,13 @@ export function calculatePenroseTiling(
     center: tilingCenter,
     r: radius,
     polygon,
-    robinsonTriangles: triangles.map(toLegacyTriangle),
-    discardedTriangles: discarded.map(toLegacyTriangle),
-    culledTriangles: culledTathamTris.map(toLegacyTriangle),
+    robinsonTriangles: triangles,
+    discardedTriangles: discarded,
+    culledTriangles: culledTathamTris,
     p3Rhombuses: rhombhash,
     culledRhombuses: culledRhombs,
     fillsIdentified: find_tris,
-    fillsFound: found_tris.map(toLegacyTriangle),
+    fillsFound: found_tris,
     rhombBases: range(10),
     scaleFunction: scale
   };

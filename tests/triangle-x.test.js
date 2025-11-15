@@ -1,18 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { TriangleX, Vector } from '../src/index.ts';
-import { TathamTriangleX, toLegacyTriangle } from '../src/tatham-triangle.js';
+import { Vector } from '../src/index.ts';
+import {
+  TathamTriangleC,
+  TathamTriangleX,
+  TathamTriangleY
+} from '../src/tatham-triangle.js';
 import { expectVectorClose } from './utils.js';
 
 const GOLDEN_RATIO = 0.6180339887498948;
-
-function makeTriangleX() {
-  return new TriangleX(
-    new Vector(0, 0), // apex
-    new Vector(10, 10), // right base
-    new Vector(-10, 10), // left base
-    'X'
-  );
-}
 
 function makeTathamTriangleX() {
   return new TathamTriangleX(
@@ -23,55 +18,36 @@ function makeTathamTriangleX() {
   );
 }
 
-const implementations = [
-  [
-    'legacy TriangleX',
-    () => {
-      const parent = makeTriangleX();
-      return { parent, children: parent.split() };
-    }
-  ],
-  [
-    'TathamTriangleX via toLegacyTriangle',
-    () => {
-      const parentT = makeTathamTriangleX();
-      const childrenT = parentT.split();
-      return {
-        parent: toLegacyTriangle(parentT),
-        children: childrenT.map(toLegacyTriangle)
-      };
-    }
-  ]
-];
-
-describe.each(implementations)('%s', (_, setup) => {
-  it('emits child triangles with the existing v1/v2/v3 order', () => {
-    const { parent, children } = setup();
-    const [childY, childC, childX] = children;
-
-    const vector32 = Vector.fromPoints(parent.v3, parent.v2).multiply(
-      GOLDEN_RATIO
+describe('TathamTriangleX split', () => {
+  it('follows the Tatham vertex ordering', () => {
+    const parent = makeTathamTriangleX();
+    const [childY, childC, childX] = parent.split();
+    const split0 = new Vector(
+      parent.v1.x + (parent.v2.x - parent.v1.x) * GOLDEN_RATIO,
+      parent.v1.y + (parent.v2.y - parent.v1.y) * GOLDEN_RATIO
     );
-    const splitPoint32 = parent.v3.add(vector32);
-
-    const vector31 = Vector.fromPoints(parent.v3, parent.v1).multiply(
-      GOLDEN_RATIO
+    const split2 = new Vector(
+      parent.v1.x + (parent.v3.x - parent.v1.x) * GOLDEN_RATIO,
+      parent.v1.y + (parent.v3.y - parent.v1.y) * GOLDEN_RATIO
     );
-    const splitPoint31 = parent.v3.add(vector31);
 
-    // First child: new TriangleY(split_point_31, split_point_32, this.v3, ...)
-    expectVectorClose(childY.v1, splitPoint31);
-    expectVectorClose(childY.v2, splitPoint32);
-    expect(childY.v3).toBe(parent.v3);
+    expect(childY).toBeInstanceOf(TathamTriangleY);
+    expect(childC).toBeInstanceOf(TathamTriangleC);
+    expect(childX).toBeInstanceOf(TathamTriangleX);
 
-    // Second child: new TriangleC(split_point_32, split_point_31, this.v1, ...)
-    expectVectorClose(childC.v1, splitPoint32);
-    expectVectorClose(childC.v2, splitPoint31);
-    expect(childC.v3).toBe(parent.v1);
+    // new TathamTriangleY(this.v1, split0, split2, ...)
+    expect(childY.v1).toBe(parent.v1);
+    expectVectorClose(childY.v2, split0);
+    expectVectorClose(childY.v3, split2);
 
-    // Third child: new TriangleX(split_point_32, this.v1, this.v2, ...)
-    expectVectorClose(childX.v1, splitPoint32);
-    expect(childX.v2).toBe(parent.v1);
-    expect(childX.v3).toBe(parent.v2);
+    // new TathamTriangleC(this.v3, split2, split0, ...)
+    expect(childC.v1).toBe(parent.v3);
+    expectVectorClose(childC.v2, split2);
+    expectVectorClose(childC.v3, split0);
+
+    // new TathamTriangleX(this.v2, this.v3, split0, ...)
+    expect(childX.v1).toBe(parent.v2);
+    expect(childX.v2).toBe(parent.v3);
+    expectVectorClose(childX.v3, split0);
   });
 });

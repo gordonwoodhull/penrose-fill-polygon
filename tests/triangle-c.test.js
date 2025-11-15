@@ -1,19 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { TriangleC, Vector } from '../src/index.ts';
-import { TathamTriangleC, toLegacyTriangle } from '../src/tatham-triangle.js';
+import { Vector } from '../src/index.ts';
+import { TathamTriangleC, TathamTriangleY } from '../src/tatham-triangle.js';
 import { expectVectorClose } from './utils.js';
 
 const GOLDEN_RATIO = 0.6180339887498948;
-
-function makeTriangleC() {
-  // Matches the orientation produced by calculatePenroseTiling for start tile C.
-  return new TriangleC(
-    new Vector(0, 5), // apex
-    new Vector(10, 0), // top of unequal edge
-    new Vector(10, 10), // bottom of unequal edge
-    'C'
-  );
-}
 
 function makeTathamTriangleC() {
   return new TathamTriangleC(
@@ -24,45 +14,26 @@ function makeTathamTriangleC() {
   );
 }
 
-const implementations = [
-  [
-    'legacy TriangleC',
-    () => {
-      const parent = makeTriangleC();
-      return { parent, children: parent.split() };
-    }
-  ],
-  [
-    'TathamTriangleC via toLegacyTriangle',
-    () => {
-      const parentT = makeTathamTriangleC();
-      const childrenT = parentT.split();
-      return {
-        parent: toLegacyTriangle(parentT),
-        children: childrenT.map(toLegacyTriangle)
-      };
-    }
-  ]
-];
-
-describe.each(implementations)('%s', (_, setup) => {
-  it('emits child triangles with the existing v1/v2/v3 order', () => {
-    const { parent, children } = setup();
-    const [childC, childY] = children;
-
-    const vector12 = Vector.fromPoints(parent.v1, parent.v2).multiply(
-      GOLDEN_RATIO
+describe('TathamTriangleC split', () => {
+  it('preserves the Tatham vertex ordering', () => {
+    const parent = makeTathamTriangleC();
+    const [childC, childY] = parent.split();
+    const splitPoint = new Vector(
+      parent.v3.x + (parent.v2.x - parent.v3.x) * GOLDEN_RATIO,
+      parent.v3.y + (parent.v2.y - parent.v3.y) * GOLDEN_RATIO
     );
-    const splitPoint12 = parent.v1.add(vector12);
 
-    // First child: new TriangleC(this.v3, split_point_12, this.v2, ...)
-    expect(childC.v1).toBe(parent.v3);
-    expectVectorClose(childC.v2, splitPoint12);
-    expect(childC.v3).toBe(parent.v2);
+    expect(childC).toBeInstanceOf(TathamTriangleC);
+    expect(childY).toBeInstanceOf(TathamTriangleY);
 
-    // Second child: new TriangleY(split_point_12, this.v3, this.v1, ...)
-    expectVectorClose(childY.v1, splitPoint12);
-    expect(childY.v2).toBe(parent.v3);
-    expect(childY.v3).toBe(parent.v1);
+    // new TathamTriangleC(this.v2, split_point, this.v1, ...)
+    expect(childC.v1).toBe(parent.v2);
+    expectVectorClose(childC.v2, splitPoint);
+    expect(childC.v3).toBe(parent.v1);
+
+    // new TathamTriangleY(this.v3, this.v1, split_point, ...)
+    expect(childY.v1).toBe(parent.v3);
+    expect(childY.v2).toBe(parent.v1);
+    expectVectorClose(childY.v3, splitPoint);
   });
 });
